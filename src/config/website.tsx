@@ -74,7 +74,7 @@ export const websiteConfig: WebsiteConfig = {
     relatedPostsSize: 3,
   },
   docs: {
-    enable: true,
+    enable: false,
   },
   mail: {
     provider: 'resend',
@@ -82,7 +82,7 @@ export const websiteConfig: WebsiteConfig = {
     supportEmail: 'InkWeapon <support@inkweapon.dev>',
   },
   newsletter: {
-    enable: true,
+    enable: false,
     provider: 'resend',
     autoSubscribeAfterSignUp: true,
   },
