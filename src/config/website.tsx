@@ -47,8 +47,8 @@ export const websiteConfig: WebsiteConfig = {
     defaultLoginRedirect: '/dashboard',
   },
   analytics: {
-    enableVercelAnalytics: false,
-    enableSpeedInsights: false,
+    enableVercelAnalytics: true,
+    enableSpeedInsights: true,
   },
   auth: {
     enableGoogleLogin: false,
@@ -74,7 +74,7 @@ export const websiteConfig: WebsiteConfig = {
     relatedPostsSize: 3,
   },
   docs: {
-    enable: false,
+    enable: true,
   },
   mail: {
     provider: 'resend',
@@ -82,7 +82,7 @@ export const websiteConfig: WebsiteConfig = {
     supportEmail: 'InkWeapon <support@inkweapon.dev>',
   },
   newsletter: {
-    enable: false,
+    enable: true,
     provider: 'resend',
     autoSubscribeAfterSignUp: true,
   },
