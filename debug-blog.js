@@ -14,7 +14,7 @@ async function debugBlog() {
   console.log('\n所有中文文章数量:', zhPosts.length);
 
   // 过滤已发布的文章
-  const publishedPosts = zhPosts.filter(post => post.data.published);
+  const publishedPosts = zhPosts.filter((post) => post.data.published);
   console.log('已发布的中文文章数量:', publishedPosts.length);
 
   // 按日期排序
@@ -32,7 +32,7 @@ async function debugBlog() {
   });
 
   // 特别检查我们的文章
-  const aiAgentPost = zhPosts.find(p => p.slugs.includes('ai-agent-guide'));
+  const aiAgentPost = zhPosts.find((p) => p.slugs.includes('ai-agent-guide'));
   if (aiAgentPost) {
     console.log('\n=== 找到 AI Agent 文章 ===');
     console.log('标题:', aiAgentPost.data.title);

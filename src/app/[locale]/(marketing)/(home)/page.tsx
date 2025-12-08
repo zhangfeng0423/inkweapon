@@ -8,7 +8,6 @@ import IntegrationSection from '@/components/blocks/integration/integration';
 import Integration2Section from '@/components/blocks/integration/integration2';
 import LogoCloud from '@/components/blocks/logo-cloud/logo-cloud';
 import PricingSection from '@/components/blocks/pricing/pricing';
-import StatsSection from '@/components/blocks/stats/stats';
 import TestimonialsSection from '@/components/blocks/testimonials/testimonials';
 import CrispChat from '@/components/layout/crisp-chat';
 import { NewsletterCard } from '@/components/newsletter/newsletter-card';
@@ -51,8 +50,6 @@ export default async function HomePage(props: HomePageProps) {
         <HeroSection />
 
         <LogoCloud />
-
-        <StatsSection />
 
         <IntegrationSection />
 

@@ -63,13 +63,13 @@ export default function Integration2Section() {
 
               <div className="mt-12 flex flex-wrap justify-center md:justify-start gap-4">
                 <Button asChild size="lg">
-                  <LocaleLink href="/">
+                  <LocaleLink href="/blog">
                     <span>{t('primaryButton')}</span>
                   </LocaleLink>
                 </Button>
 
                 <Button asChild size="lg" variant="outline">
-                  <LocaleLink href="/">
+                  <LocaleLink href="/blog">
                     <span>{t('secondaryButton')}</span>
                   </LocaleLink>
                 </Button>

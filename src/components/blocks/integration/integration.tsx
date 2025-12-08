@@ -80,7 +80,7 @@ const IntegrationCard = ({
   title,
   description,
   children,
-  link = '#',
+  link = '/blog',
 }: {
   title: string;
   description: string;

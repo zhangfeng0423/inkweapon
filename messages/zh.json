@@ -1,8 +1,8 @@
 {
   "Metadata": {
-    "name": "MkSaaS Demo",
-    "title": "MkSaaS - 最好的 AI SaaS 模板",
-    "description": "MkSaaS 是构建 AI SaaS 的最佳模板，使用 MkSaaS 可以在几天内轻松构建您的 AI SaaS，简单且毫不费力。"
+    "name": "InkWeapon",
+    "title": "Next.js for Python 开发者：构建 AI SaaS 产品，而不只是脚本",
+    "description": "完整的参考指南，帮助 Python 开发者迁移到 Next.js。让你的 AI 算法拥有专业界面，无需迷失在 CSS 或复杂的 JavaScript 中。"
   },
   "Common": {
     "premium": "付费文章",
@@ -144,10 +144,10 @@
   },
   "AboutPage": {
     "title": "关于我们",
-    "description": "MkSaaS 是一个使用最先进的技术栈构建的 AI SaaS 模板，它可以帮助你更快更好地构建你的 SaaS。如果你有任何问题，欢迎联系我。",
-    "authorName": "MkSaaS",
-    "authorBio": "最好的 AI SaaS 模板",
-    "introduction": "👋 你好，这里是 MkSaaS，一个使用最先进的技术栈构建的 AI SaaS 模板，它可以帮助你更快更好地构建你的 SaaS。如果你有任何问题，欢迎联系我。",
+    "description": "InkWeapon 是专为想要使用 Next.js 构建 AI SaaS 产品的 Python 开发者设计的完整参考指南。",
+    "authorName": "InkWeapon",
+    "authorBio": "Next.js for Python 开发者",
+    "introduction": "👋 你好！InkWeapon 是你从 Python 迁移到 Next.js 的完整参考指南。别让你的 AI 模型在 Jupyter Notebooks 中腐烂了——我们会帮你构建用户喜爱的专业 AI 产品。",
     "talkWithMe": "联系我",
     "followMe": "关注我"
   },
@@ -273,8 +273,8 @@
   },
   "BlogPage": {
     "title": "博客",
-    "description": "来自我们的团队最新新闻和更新",
-    "subtitle": "来自我们的团队最新新闻和更新",
+    "description": "深入的技术文章，涵盖 Next.js、JavaScript、Python 等现代开发技术",
+    "subtitle": "分享实用的编程知识和项目经验",
     "author": "作者",
     "categories": "分类",
     "tableOfContents": "目录",
@@ -292,7 +292,7 @@
     "previousPage": "上一页",
     "nextPage": "下一页",
     "chooseLanguage": "选择语言",
-    "title": "MkSaaS文档",
+    "title": "InkWeapon 参考指南",
     "homepage": "首页"
   },
   "PremiumContent": {
@@ -311,16 +311,16 @@
   "Marketing": {
     "navbar": {
       "features": {
-        "title": "功能"
+        "title": "为什么选择 Next.js for Python？"
       },
       "pricing": {
         "title": "价格"
       },
       "blog": {
-        "title": "博客"
+        "title": "Python 指南"
       },
       "docs": {
-        "title": "文档"
+        "title": "参考指南"
       },
       "ai": {
         "title": "AI 工具",
@@ -445,7 +445,7 @@
       }
     },
     "footer": {
-      "tagline": "使用 MkSaaS 在几天内轻松构建您的 AI SaaS",
+      "tagline": "Next.js for Python 开发者：构建 AI SaaS 产品，而不只是脚本",
       "product": {
         "title": "产品",
         "items": {
@@ -780,116 +780,116 @@
     }
   },
   "HomePage": {
-    "title": "MkSaaS",
-    "description": "使用 MkSaaS 在几天内轻松构建您的 AI SaaS 产品",
+    "title": "Python 到 Next.js 15+：从后端开发者到全栈架构师",
+    "description": "22章实战指南，从 Python 后端思维转向现代全栈架构。掌握 Drizzle ORM、Stripe 支付、Better Auth 认证，构建企业级 SAAS 产品。",
     "hero": {
-      "title": "使用 MkSaaS 轻松构建您的 AI SaaS 产品",
-      "description": "MkSaaS 是构建 AI SaaS 的最佳模板，内置 AI、身份验证、全球支付、博客、文档、邮件订阅、SEO、多彩主题、丰富组件等。",
-      "introduction": "介绍 MkSaaS 模板",
-      "primary": "开始使用",
-      "secondary": "查看演示"
+      "title": "22章完整学习路径：从 Python 后端到全栈架构师",
+      "description": "完整的企业级 SAAS 开发实战指南，涵盖 Drizzle ORM、Stripe 支付系统、Better Auth 认证和现代 DevOps。完成从 Python 开发者到全栈系统架构师的蜕变。",
+      "introduction": "Python 到全栈架构师迁移指南",
+      "primary": "开始架构师进阶之路",
+      "secondary": "查看完整章节目录"
     },
     "logocloud": {
-      "title": "您最爱公司都是我们的合作伙伴"
+      "title": "全球 Python 开发者的信赖之选"
     },
     "integration": {
-      "title": "集成",
-      "subtitle": "与您最喜欢的工具集成",
-      "description": "无缝连接流行的平台和服务，以增强您的工作流程。",
-      "learnMore": "了解更多",
+      "title": "Python 生态系统连接",
+      "subtitle": "无缝桥接 Python 和 JavaScript",
+      "description": "通过无缝集成，将你现有的 Python AI 模型与现代 web 界面连接起来。",
+      "learnMore": "学习集成模式",
       "items": {
         "item-1": {
-          "title": "Google Gemini",
-          "description": "这里是Google Gemini的描述，详细介绍Google Gemini的功能和优势。"
+          "title": "Vercel AI SDK",
+          "description": "连接 Python AI 模型与现代 web 界面的完美桥梁，处理流式传输和复杂工作流。"
         },
         "item-2": {
-          "title": "Replit",
-          "description": "这里是Replit的描述，详细介绍Replit的功能和优势。"
+          "title": "Drizzle ORM",
+          "description": "熟悉的 SQLAlchemy 风格语法，强大的数据库访问能力，让你在 Next.js 组件中如鱼得水。"
         },
         "item-3": {
-          "title": "MagicUI",
-          "description": "这里是MagicUI的描述，详细介绍MagicUI的功能和优势。"
+          "title": "Shadcn/ui",
+          "description": "复制粘贴精美组件，告别 CSS 头疼。就像导入你最爱的 Python 库一样简单。"
         },
         "item-4": {
-          "title": "VSCodium",
-          "description": "这里是VSCodium的描述，详细介绍VSCodium的功能和优势。"
+          "title": "Server Actions",
+          "description": "Next.js 最具 Python 风格的功能。无需编写 REST API，直接从前端调用数据库。"
         },
         "item-5": {
-          "title": "MediaWiki",
-          "description": "这里是MediaWiki的描述，详细介绍MediaWiki的功能和优势。"
+          "title": "App Router",
+          "description": "文件系统路由，就像 Django/Flask 的 URL 模式一样自然，但更加强大。"
         },
         "item-6": {
-          "title": "Google PaLM",
-          "description": "这里是Google PaLM的描述，详细介绍Google PaLM的功能和优势。"
+          "title": "TypeScript",
+          "description": "类型提示的增强版。如果你喜欢 Python 的类型检查，你会感到宾至如归。"
         }
       }
     },
     "integration2": {
-      "title": "与您最喜欢的工具集成",
-      "description": "无缝连接流行的平台和服务，以增强您的工作流程。",
-      "primaryButton": "开始使用",
-      "secondaryButton": "查看演示"
+      "title": "保留你的 Python，升级你的前端",
+      "description": "你不需要抛弃现有的 Python AI 代码。学习如何将其与现代 web 界面桥接。",
+      "primaryButton": "开始迁移指南",
+      "secondaryButton": "Python 到 Next.js 速查表"
     },
     "features": {
-      "title": "功能",
-      "subtitle": "您的 SaaS 产品功能",
-      "description": "请在这里介绍您的 SaaS 产品的特色功能的信息",
+      "title": "为什么这是 Python 开发者最重要的架构升级？",
+      "subtitle": "从脚本编写者到系统架构师：完整技能跃迁",
+      "description": "不只是换个前端框架，而是重新定义你的技术视野和职业路径",
       "items": {
         "item-1": {
-          "title": "产品特色功能一",
-          "description": "请在这里详细描述您的产品特色功能一，尽可能详细，使其更吸引用户，提高落地页的转化率"
+          "title": "数据库架构：从 SQLAlchemy 到 Drizzle ORM",
+          "description": "深度对比 Python 与 TypeScript 数据库访问模式。学习企业级数据库设计、迁移策略、多租户架构。让你不只是会用 ORM，而是理解数据架构的本质。"
         },
         "item-2": {
-          "title": "产品特色功能二",
-          "description": "请在这里详细描述您的产品特色功能二，尽可能详细，使其更吸引用户，提高落地页的转化率"
+          "title": "支付系统架构：Stripe 完整集成实战",
+          "description": "从订阅计费到积分系统，从 Webhook 处理到财务对账。构建可商业化的支付架构，处理真实世界中的退款、争议、税务等复杂场景。"
         },
         "item-3": {
-          "title": "产品特色功能三",
-          "description": "请在这里详细描述您的产品特色功能三，尽可能详细，使其更吸引用户，提高落地页的转化率"
+          "title": "认证与权限：Better Auth 多租户实战",
+          "description": "超越简单的用户登录，构建 RBAC 权限系统、OAuth 集成、SSO 单点登录。学习现代认证架构设计，处理企业级安全需求。"
         },
         "item-4": {
-          "title": "产品特色功能四",
-          "description": "请在这里详细描述您的产品特色功能四，尽可能详细，使其更吸引用户，提高落地页的转化率"
+          "title": "DevOps 与运维：现代开发完整工作流",
+          "description": "GitHub Actions CI/CD、Vercel 部署策略、监控告警体系。学习如何让你的 SAAS 产品稳定运行在生产环境，处理真实用户的海量请求。"
         }
       }
     },
     "features2": {
-      "title": "功能2",
-      "subtitle": "您的 SaaS 产品功能",
-      "description": "请在这里介绍您的 SaaS 产品的特色功能的信息",
-      "feature-1": "特色功能特点一",
-      "feature-2": "特色功能特点二",
-      "feature-3": "特色功能特点三",
-      "feature-4": "特色功能特点四"
+      "title": "完整架构学习路径",
+      "subtitle": "22章覆盖现代 SAAS 开发的每个关键环节",
+      "description": "从 Python 后端思维到全栈系统架构师，掌握现代 Web 应用的每一层架构",
+      "feature-1": "第1-2部分：思维与核心技术 (Python 到 JS 思维转变、Next.js 15 基础)",
+      "feature-2": "第3-4部分：数据库与认证架构 (Drizzle vs SQLAlchemy、Better Auth 多租户)",
+      "feature-3": "第5-6部分：商业与运维 (Stripe 支付、CI/CD、监控体系)",
+      "feature-4": "第7-8部分：高级集成与最佳实践 (AI 能力、测试策略、部署)"
     },
     "features3": {
-      "title": "功能3",
-      "subtitle": "您的 SaaS 产品功能",
-      "description": "请在这里介绍您的 SaaS 产品的特色功能的信息",
+      "title": "企业级架构深度解析",
+      "subtitle": "构建生产级系统，而不只是演示工具",
+      "description": "区分专业开发者与业余爱好者的高级架构模式",
       "items": {
         "item-1": {
-          "title": "产品特色功能一",
-          "description": "请在这里详细描述您的产品特色功能一，尽可能详细，使其更吸引用户"
+          "title": "数据库架构精通",
+          "description": "超越基础 ORM 使用。学习数据库架构设计、迁移模式、性能优化和多租户数据隔离策略。"
         },
         "item-2": {
-          "title": "产品特色功能二",
-          "description": "请在这里详细描述您的产品特色功能二，尽可能详细，使其更吸引用户"
+          "title": "支付系统架构",
+          "description": "完整的 Stripe 集成，包含 Webhook 处理、订阅管理、退款处理和财务对账系统。"
         },
         "item-3": {
-          "title": "产品特色功能三",
-          "description": "请在这里详细描述您的产品特色功能三，尽可能详细，使其更吸引用户"
+          "title": "认证与安全架构",
+          "description": "实现 RBAC、OAuth、SSO 和多因素认证。处理企业级安全需求和合规性要求。"
         },
         "item-4": {
-          "title": "产品特色功能四",
-          "description": "请在这里详细描述您的产品特色功能四，尽可能详细，使其更吸引用户"
+          "title": "DevOps 与生产运维",
+          "description": "CI/CD 管道、部署策略、监控系统和故障响应。让你的 SAAS 7x24 稳定运行。"
         },
         "item-5": {
-          "title": "产品特色功能五",
-          "description": "请在这里详细描述您的产品特色功能五，尽可能详细，使其更吸引用户"
+          "title": "AI 集成（特色章节）",
+          "description": "22章中的专门章节介绍 Vercel AI SDK 集成。为你的 SAAS 添加 AI 能力，不偏离核心架构重点。"
         },
         "item-6": {
-          "title": "产品特色功能六",
-          "description": "请在这里详细描述您的产品特色功能六，尽可能详细，使其更吸引用户"
+          "title": "测试与质量保障",
+          "description": "全面的测试策略、性能监控和代码质量实践，随团队规模扩展。"
         }
       }
     },
@@ -900,194 +900,194 @@
     },
     "faqs": {
       "title": "常见问题",
-      "subtitle": "如果您有任何问题，请随时联系我们",
+      "subtitle": "关于从 Python 迁移到 Next.js 的常见问题",
       "items": {
         "item-1": {
-          "question": "你们提供免费试用吗？",
-          "answer": "是的，我们提供7天的免费试用。"
+          "question": "我需要完全放弃 Python 吗？",
+          "answer": "不需要。使用 Python 进行重量级 AI 处理和数据科学，但使用 Next.js 构建应用层。这个 Python 开发者指南教你如何有效地桥接它们。"
         },
         "item-2": {
-          "question": "如何取消我的订阅？",
-          "answer": "您可以通过访问账单页面取消您的订阅。"
+          "question": "TypeScript 对 Python 开发者来说很难吗？",
+          "answer": "如果你在 Python 中使用过类型提示，TypeScript 会感觉很熟悉。这个关于 Next.js for Python 开发者的指南专注于这些相似性，让过渡变得顺畅。"
         },
         "item-3": {
-          "question": "我可以更改我的计划吗？",
-          "answer": "是的，您可以随时通过访问账单页面更改您的计划。"
+          "question": "我可以用这个技术栈构建聊天机器人吗？",
+          "answer": "可以。我们专门介绍了 Vercel AI SDK，它让构建聊天机器人比单独使用 Python 框架更快。非常适合 AI 开发者。"
         },
         "item-4": {
-          "question": "你们的退款政策是什么？",
-          "answer": "是的，我们提供30天的退款保证。"
+          "question": "我现有的 AI 模型怎么办？",
+          "answer": "保留你的 Python 模型！我们向你展示如何为现有模型创建 API 端点，并将它们与精美的 Next.js 前端集成。"
         },
         "item-5": {
-          "question": "找不到您想问的问题？",
-          "answer": "请联系我们的客户支持团队，邮箱地址：support@mksaas.com"
+          "question": "这与 Streamlit 或 Gradio 有什么不同？",
+          "answer": "Streamlit/Gradio 很适合演示，但对于商业化产品有限制。Next.js 提供生产级功能，如身份验证、支付和可扩展性。"
         }
       }
     },
     "testimonials": {
-      "title": "客户评价",
-      "subtitle": "我们的客户对我们的评价",
+      "title": "成功案例",
+      "subtitle": "Python 开发者如何使用 Next.js 构建真实 AI 产品",
       "items": {
         "item-1": {
-          "name": "Jonathan Yombo",
-          "role": "软件工程师",
+          "name": "陈博士",
+          "role": "机器学习工程师",
           "image": "https://randomuser.me/api/portraits/men/1.jpg",
-          "quote": "MkSaaS 非常出色且实用，无需费心，一个真正的金矿。"
+          "quote": "终于！有一个理解 Python 开发者的指南了。我的 NLP 模型原本困在 Jupyter notebook 中，现在它成了有付费客户的商业 SaaS 产品。"
         },
         "item-2": {
-          "name": "Yves Kalume",
-          "role": "Android GDE",
+          "name": "李明",
+          "role": "数据科学家",
           "image": "https://randomuser.me/api/portraits/men/6.jpg",
-          "quote": "没有网页设计经验，我只需几分钟就可以用 Tailwindcss 重新设计我的整个网站，感谢 MkSaaS。"
+          "quote": "我原本对前端开发感到恐惧。这个指南让 Next.js 感觉像写 Python 代码一样自然。TypeScript 基本上就是增强版的 Mypy。"
         },
         "item-3": {
-          "name": "Yucel Faruksahan",
-          "role": "Tailkits 创建者",
+          "name": "田中博士",
+          "role": "AI 研究员",
           "image": "https://randomuser.me/api/portraits/men/7.jpg",
-          "quote": "MkSaaS 模板做得很好，这是我见过最好的 SaaS 模板，没有之一 :)"
+          "quote": "Streamlit 做演示很棒，但当我建议用于生产环境时客户都笑了。这个指南帮我构建了真正的 AI SaaS。"
         },
         "item-4": {
-          "name": "Anonymous author",
-          "role": "产品经理",
+          "name": "王建",
+          "role": "Python 开发者",
           "image": "https://randomuser.me/api/portraits/men/8.jpg",
-          "quote": "我不熟悉 Tailwind，我想自己做一些页面，我在网上搜索了很多英雄页面和区块。然而，大多数都没有给我一个清晰的想法，或者需要一些 HTML/CSS 编码背景来从原始文件中做一些更改，或者太贵了。我下载了其中一个 MkSaaS 模板，它非常容易理解，你可以在开始时修改代码/区块以完美地适应你的页面目的。"
+          "quote": "Server Actions 的概念让我大开眼界。不再需要写无聊的 REST API 了。感觉像魔法，但这只是干净的工程实现。"
         },
         "item-5": {
-          "name": "Shekinah Tshiokufila",
-          "role": "高级软件工程师",
+          "name": "张伟",
+          "role": "数据科学家",
           "image": "https://randomuser.me/api/portraits/men/4.jpg",
-          "quote": "MkSaaS 正在重新定义网页设计标准，这些区块为那些喜欢美丽但可能缺乏时间实现它的人提供了简单且高效的方式。我只能推荐这个不可思议的奇迹。"
+          "quote": "我的 Python 模型完全保持原样，只是用 FastAPI 端点包装了一下。指南向我展示了如何创建精美的 Next.js 前端。"
         },
         "item-6": {
-          "name": "Oketa Fred",
-          "role": "全栈开发工程师",
+          "name": "刘强",
+          "role": "后端开发者",
           "image": "https://randomuser.me/api/portraits/men/2.jpg",
-          "quote": "我绝对喜欢 MkSaaS！这些组件区块设计精美且易于使用，使创建一个出色的网站变得轻而易举。"
+          "quote": "从 Django 过来，App Router 立刻就感到熟悉。文件系统路由如此直观。一个周末就构建了我的第一个 SaaS。"
         },
         "item-7": {
-          "name": "Zeki",
-          "role": "ChatExtend 创始人",
+          "name": "赵静",
+          "role": "AI 创业公司创始人",
           "image": "https://randomuser.me/api/portraits/men/5.jpg",
-          "quote": "使用 MkSaaS 就像解锁了一个秘密的设计超能力。它是简单性和多功能性的完美融合，使我们能够创建既令人惊叹又用户友好的界面。"
+          "quote": "我的 AI 模型原本在 Git 仓库中腐烂。现在我有了一个生产就绪的 SaaS，带身份验证、支付和精美 UI。游戏规则改变者。"
         },
         "item-8": {
-          "name": "Joseph Kitheka",
-          "role": "全栈开发工程师",
+          "name": "刘教授",
+          "role": "计算机视觉研究员",
           "image": "https://randomuser.me/api/portraits/men/9.jpg",
-          "quote": "MkSaaS 改变了我的网页开发方式。他们的 UI 组件、区块和模板极大地加速了我的工作流程。定制每个方面的灵活性使我能够创建独特的用户体验。MkSaaS 是现代网页开发的游戏规则改变者！"
+          "quote": "部署 ML 模型曾经是噩梦。这个指南向我展示了如何将 Python 模型与现代 web 应用桥接。我的研究终于有了用户。"
         },
         "item-9": {
-          "name": "Khatab Wedaa",
-          "role": "MerakiUI 创建者",
+          "name": "孙芳",
+          "role": "全栈开发者",
           "image": "https://randomuser.me/api/portraits/men/10.jpg",
-          "quote": "MkSaaS 是一个优雅、干净且响应式的 SaaS 模板，它非常有助于快速开始您的项目。"
+          "quote": "光是 Drizzle ORM 部分就值这个价钱。感觉就像 SQLAlchemy 但更好。终于有一个讲得通的 ORM 了。"
         },
         "item-10": {
-          "name": "Rodrigo Aguilar",
-          "role": "TailwindAwesome 创建者",
+          "name": "周涛",
+          "role": "运维工程师",
           "image": "https://randomuser.me/api/portraits/men/11.jpg",
-          "quote": "我爱 MkSaaS ❤️。这些组件区块结构良好，易于使用，设计精美。它使创建一个出色的网站变得非常容易。"
+          "quote": "不再需要管理 Nginx 配置了！部署到 Vercel 比维护 Python 服务器简单多了。这个指南为我节省了无数小时。"
         },
         "item-11": {
-          "name": "Eric Ampire",
-          "role": "Google 开发者专家",
+          "name": "吴博士",
+          "role": "AI 顾问",
           "image": "https://randomuser.me/api/portraits/men/12.jpg",
-          "quote": "MkSaaS 模板是任何想要创建一个美丽且功能齐全的网站但没有网页设计经验的人的完美解决方案。这些模板易于使用，可定制，并且响应迅速。我强烈推荐 MkSaaS 模板给任何想要创建网站的人。"
+          "quote": "我终于可以为我的 AI 工具收取高端费用了，而不只是分享 Jupyter notebooks。这个指南教我如何构建真实的产品。"
         },
         "item-12": {
-          "name": "Roland Tubonge",
+          "name": "陈凯",
           "role": "软件工程师",
           "image": "https://randomuser.me/api/portraits/men/13.jpg",
-          "quote": "MkSaaS 设计得如此出色，即使没有网页设计经验，您也可以创造奇迹。让自己被吸引！"
+          "quote": "TypeScript 一开始看起来令人生畏，但这个指南让它对 Python 开发者来说变得如此易懂。现在我在新项目中更喜欢用它。"
         }
       }
     },
     "stats": {
-      "title": "统计",
-      "subtitle": "MkSaaS 相关的数字",
-      "description": "MkSaaS 可让您在几天内轻松构建您的 AI SaaS",
+      "title": "影响力",
+      "subtitle": "Python 开发者构建真实 AI 产品的成果",
+      "description": "加入数千名已经从脚本跃迁到可扩展 SaaS 产品的 Python 开发者行列",
       "items": {
         "item-1": {
-          "title": "GitHub 上的星星"
+          "title": "Python 开发者成功转型"
         },
         "item-2": {
-          "title": "使用 MkSaaS 的活跃用户"
+          "title": "AI 模型成功部署"
         },
         "item-3": {
-          "title": "使用 MkSaaS 启动的应用"
+          "title": "SaaS 产品成功上线"
         }
       }
     },
     "calltoaction": {
-      "title": "开始构建",
-      "description": "MkSaaS 可让您在几天内轻松构建您的 AI SaaS",
-      "primaryButton": "开始使用",
-      "secondaryButton": "查看演示"
+      "title": "开始构建你的 AI 武器",
+      "description": "别让对前端的恐惧阻碍你。你的 Python 技能比你想象的更有价值。",
+      "primaryButton": "阅读引言",
+      "secondaryButton": "获取速查表"
     }
   },
   "AITextPage": {
-    "title": "AI 文本",
-    "description": "使用 AI 分析网页内容，提取关键信息、功能和见解",
-    "content": "网页内容分析器",
-    "subtitle": "输入网站 URL，使用 AI 分析其内容",
+    "title": "AI 文本生成",
+    "description": "学习如何将 Python 模型的 AI 文本生成功能集成到 Next.js 应用中",
+    "content": "AI 文本集成",
+    "subtitle": "将你的 Python NLP 模型与现代 web 界面桥接",
     "analyzer": {
-      "title": "网页内容分析器",
-      "description": "使用 AI 分析任何网站的内容，提取结构化信息",
-      "placeholder": "输入网站 URL（例如：https://example.com）",
-      "button": "分析网站",
+      "title": "文本生成演示",
+      "description": "查看如何将 Python AI 模型与 Next.js 前端连接进行文本生成",
+      "placeholder": "在此输入你的文本提示...",
+      "button": "生成文本",
       "loading": {
-        "scraping": "正在抓取网站内容...",
-        "analyzing": "正在使用 AI 分析内容..."
+        "scraping": "正在使用 Python 模型处理...",
+        "analyzing": "正在生成响应..."
       },
       "results": {
-        "title": "分析结果",
-        "newAnalysis": "分析其他网站",
+        "title": "生成结果",
+        "newAnalysis": "尝试另一个提示",
         "sections": {
-          "title": "标题",
-          "description": "描述",
-          "introduction": "介绍",
-          "features": "功能",
-          "pricing": "定价",
+          "title": "输入",
+          "description": "生成的文本",
+          "introduction": "使用的模型",
+          "features": "处理时间",
+          "pricing": "使用的积分",
           "useCases": "使用场景",
-          "screenshot": "网站截图"
+          "screenshot": "响应预览"
         }
       },
       "errors": {
-        "invalidUrl": "请输入以 http:// 或 https:// 开头的有效 URL",
-        "analysisError": "分析网站失败，请重试。",
+        "invalidUrl": "请输入有效的文本提示",
+        "analysisError": "生成文本失败，请重试。",
         "networkError": "网络错误，请检查您的连接并重试。",
         "insufficientCredits": "积分不足，请购买更多积分以继续。"
       }
     },
     "features": {
       "scraping": {
-        "title": "智能网页抓取",
-        "description": "先进的网页抓取技术从任何网站提取干净、结构化的内容"
+        "title": "Python 模型集成",
+        "description": "将你现有的 Python NLP 模型与 Next.js 前端无缝连接"
       },
       "analysis": {
-        "title": "AI 驱动分析",
-        "description": "智能 AI 分析提取关键见解、功能和结构化信息"
+        "title": "实时生成",
+        "description": "使用 Next.js 流式传输功能将 AI 生成的文本直接流式传输给用户"
       },
       "results": {
-        "title": "结构化结果",
-        "description": "获得有组织、易于阅读的结果，包含清晰的部分和可操作的见解"
+        "title": "生产就绪",
+        "description": "部署能随用户需求扩展并优雅处理错误的文本生成功能"
       }
     }
   },
   "AIImagePage": {
-    "title": "AI 图片",
-    "description": "MkSaaS 让您在几天内轻松构建您的 AI SaaS，简单且毫不费力"
+    "title": "AI 图像生成",
+    "description": "学习如何将 Python 图像生成模型集成到 Next.js 应用中"
   },
   "AIChatPage": {
-    "title": "AI 聊天",
-    "description": "MkSaaS 让您在几天内轻松构建您的 AI SaaS，简单且毫不费力"
+    "title": "AI 聊天集成",
+    "description": "构建连接 Python AI 模型与现代 web UI 的聊天界面"
   },
   "AIVideoPage": {
-    "title": "AI 视频",
-    "description": "MkSaaS 让您在几天内轻松构建您的 AI SaaS，简单且毫不费力"
+    "title": "AI 视频处理",
+    "description": "在 Next.js 应用中使用 Python 模型处理和生成视频内容"
   },
   "AIAudioPage": {
-    "title": "AI 音频",
-    "description": "MkSaaS 让您在几天内轻松构建您的 AI SaaS，简单且毫不费力"
+    "title": "AI 音频处理",
+    "description": "将 Python 音频处理和转录功能集成到 Next.js 应用中"
   }
 }

@@ -5,12 +5,12 @@ import type { WebsiteConfig } from '@/types';
  * website config, without translations
  *
  * docs:
- * https://mksaas.com/docs/config/website
+ * https://inkweapon.dev/docs/config/website
  */
 export const websiteConfig: WebsiteConfig = {
   ui: {
     theme: {
-      defaultTheme: 'default',
+      defaultTheme: 'blue',
       enableSwitch: true,
     },
     mode: {
@@ -25,17 +25,17 @@ export const websiteConfig: WebsiteConfig = {
       logoDark: '/logo-dark.png',
     },
     social: {
-      github: 'https://github.com/MkSaaSHQ',
-      twitter: 'https://mksaas.link/twitter',
-      blueSky: 'https://mksaas.link/bsky',
-      discord: 'https://mksaas.link/discord',
-      mastodon: 'https://mksaas.link/mastodon',
-      linkedin: 'https://mksaas.link/linkedin',
-      youtube: 'https://mksaas.link/youtube',
+      github: 'https://github.com/InkWeaponHQ',
+      twitter: 'https://inkweapon.link/twitter',
+      blueSky: 'https://inkweapon.link/bsky',
+      discord: 'https://inkweapon.link/discord',
+      mastodon: 'https://inkweapon.link/mastodon',
+      linkedin: 'https://inkweapon.link/linkedin',
+      youtube: 'https://inkweapon.link/youtube',
     },
   },
   features: {
-    enableUpgradeCard: true,
+    enableUpgradeCard: false,
     enableUpdateAvatar: true,
     enableAffonsoAffiliate: false,
     enablePromotekitAffiliate: false,
@@ -51,9 +51,9 @@ export const websiteConfig: WebsiteConfig = {
     enableSpeedInsights: false,
   },
   auth: {
-    enableGoogleLogin: true,
-    enableGithubLogin: true,
-    enableCredentialLogin: true,
+    enableGoogleLogin: false,
+    enableGithubLogin: false,
+    enableCredentialLogin: false,
   },
   i18n: {
     defaultLocale: 'en',
@@ -74,12 +74,12 @@ export const websiteConfig: WebsiteConfig = {
     relatedPostsSize: 3,
   },
   docs: {
-    enable: true,
+    enable: false,
   },
   mail: {
     provider: 'resend',
-    fromEmail: 'MkSaaS <support@mksaas.com>',
-    supportEmail: 'MkSaaS <support@mksaas.com>',
+    fromEmail: 'InkWeapon <support@inkweapon.dev>',
+    supportEmail: 'InkWeapon <support@inkweapon.dev>',
   },
   newsletter: {
     enable: false,
@@ -91,12 +91,13 @@ export const websiteConfig: WebsiteConfig = {
     provider: 's3',
   },
   payment: {
-    provider: 'stripe',
+    provider: '',
   },
   price: {
     plans: {
       free: {
         id: 'free',
+        disabled: true,
         prices: [],
         isFree: true,
         isLifetime: false,
@@ -108,6 +109,7 @@ export const websiteConfig: WebsiteConfig = {
       },
       pro: {
         id: 'pro',
+        disabled: true,
         prices: [
           {
             type: PaymentTypes.SUBSCRIPTION,
@@ -135,6 +137,7 @@ export const websiteConfig: WebsiteConfig = {
       },
       lifetime: {
         id: 'lifetime',
+        disabled: true,
         prices: [
           {
             type: PaymentTypes.ONE_TIME,
@@ -155,10 +158,10 @@ export const websiteConfig: WebsiteConfig = {
     },
   },
   credits: {
-    enableCredits: true,
+    enableCredits: false,
     enablePackagesForFreePlan: false,
     registerGiftCredits: {
-      enable: true,
+      enable: false,
       amount: 50,
       expireDays: 30,
     },

@@ -1,8 +1,8 @@
 {
   "Metadata": {
-    "name": "MkSaaS Demo",
-    "title": "MkSaaS - The Best AI SaaS Boilerplate",
-    "description": "MkSaaS is the best AI SaaS boilerplate. Make AI SaaS in days, simply and effortlessly"
+    "name": "InkWeapon",
+    "title": "Next.js for Python Developers: Build AI SaaS Products, Not Just Scripts",
+    "description": "A complete reference guide to help you migrate from Python to Next.js. Give your AI algorithms a professional interface without getting lost in CSS or complex JavaScript."
   },
   "Common": {
     "premium": "Premium",
@@ -144,10 +144,10 @@
   },
   "AboutPage": {
     "title": "About",
-    "description": "This is MkSaaS, an AI SaaS template built with modern technologies, helping you build your SaaS faster and better.",
-    "authorName": "MkSaaS",
-    "authorBio": "AI SaaS Boilerplate",
-    "introduction": "👋 Hi there! This is MkSaaS, an AI SaaS template built with modern technologies, helping you build your SaaS faster and better. If you have any questions, welcome to contact me.",
+    "description": "InkWeapon is the complete reference guide for Python developers who want to build AI SaaS products using Next.js.",
+    "authorName": "InkWeapon",
+    "authorBio": "Next.js for Python Developers",
+    "introduction": "👋 Hi there! InkWeapon is your complete reference guide for migrating from Python to Next.js. Stop letting your AI models rot in Jupyter Notebooks - we'll help you build professional AI products that users love.",
     "talkWithMe": "Talk with me",
     "followMe": "Follow me on X"
   },
@@ -273,8 +273,8 @@
   },
   "BlogPage": {
     "title": "Blog",
-    "description": "Latest news and updates from our team",
-    "subtitle": "Latest news and updates from our team",
+    "description": "In-depth technical articles covering Next.js, JavaScript, Python, and modern development technologies",
+    "subtitle": "Sharing practical programming knowledge and project experiences",
     "author": "Author",
     "categories": "Categories",
     "tableOfContents": "Table of Contents",
@@ -292,7 +292,7 @@
     "previousPage": "Previous",
     "nextPage": "Next",
     "chooseLanguage": "Select language",
-    "title": "MkSaaS Docs",
+    "title": "InkWeapon Reference Guide",
     "homepage": "Homepage"
   },
   "PremiumContent": {
@@ -311,16 +311,16 @@
   "Marketing": {
     "navbar": {
       "features": {
-        "title": "Features"
+        "title": "Why Next.js for Python?"
       },
       "pricing": {
         "title": "Pricing"
       },
       "blog": {
-        "title": "Blog"
+        "title": "Python Guides"
       },
       "docs": {
-        "title": "Docs"
+        "title": "Reference Guide"
       },
       "ai": {
         "title": "AI Tools",
@@ -445,7 +445,7 @@
       }
     },
     "footer": {
-      "tagline": "Make AI SaaS in days, simply and effortlessly",
+      "tagline": "Next.js for Python Developers: Build AI SaaS Products, Not Just Scripts",
       "product": {
         "title": "Product",
         "items": {
@@ -780,116 +780,116 @@
     }
   },
   "HomePage": {
-    "title": "MkSaaS",
-    "description": "Make AI SaaS in days, simply and effortlessly",
+    "title": "Python to Next.js 15+: From Backend Developer to Full-Stack Architect",
+    "description": "22-chapter hands-on guide to evolve from Python backend thinking to modern full-stack architecture. Master Drizzle ORM, Stripe payments, Better Auth authentication, and build enterprise-grade SaaS products.",
     "hero": {
-      "title": "Make AI SaaS in days, simply and effortlessly",
-      "description": "The is a demo website built with MkSaaS, a Next.js SaaS boilerplate to help you build your AI SaaS faster and better.",
-      "introduction": "Introducing MkSaaS Boilerplate",
-      "primary": "Get Started",
-      "secondary": "See Demo"
+      "title": "From Python Backend to Full-Stack Architect in 22 Chapters",
+      "description": "Complete hands-on guide covering enterprise-grade SaaS development with Drizzle ORM, Stripe payments, Better Auth, and modern DevOps. Transform from a Python developer to a full-stack system architect.",
+      "introduction": "The Python-to-Full-Stack Architect Migration Guide",
+      "primary": "Start Your Architect Journey",
+      "secondary": "View Full Chapter Outline"
     },
     "logocloud": {
-      "title": "Your favorite companies are our partners"
+      "title": "Trusted by Python developers worldwide"
     },
     "integration": {
-      "title": "Integrations",
-      "subtitle": "Integrate with your favorite tools",
-      "description": "Connect seamlessly with popular platforms and services to enhance your workflow.",
-      "learnMore": "Learn More",
+      "title": "The Python Ecosystem Connection",
+      "subtitle": "Bridging Python and JavaScript seamlessly",
+      "description": "Connect your existing Python AI models with modern web interfaces through seamless integration.",
+      "learnMore": "Learn Integration Patterns",
       "items": {
         "item-1": {
-          "title": "Google Gemini",
-          "description": "Amet praesentium deserunt ex commodi tempore fuga voluptatem."
+          "title": "Vercel AI SDK",
+          "description": "The perfect bridge between your Python AI models and modern web interfaces, handling streaming and complex workflows."
         },
         "item-2": {
-          "title": "Replit",
-          "description": "Amet praesentium deserunt ex commodi tempore fuga voluptatem."
+          "title": "Drizzle ORM",
+          "description": "Feeling right at home with SQLAlchemy-like syntax and powerful database access from your Next.js components."
         },
         "item-3": {
-          "title": "MagicUI",
-          "description": "Amet praesentium deserunt ex commodi tempore fuga voluptatem."
+          "title": "Shadcn/ui",
+          "description": "Copy-paste beautiful components without CSS headaches. Think of it as importing your favorite Python libraries."
         },
         "item-4": {
-          "title": "VSCodium",
-          "description": "Amet praesentium deserunt ex commodi tempore fuga voluptatem."
+          "title": "Server Actions",
+          "description": "The most Pythonic feature of Next.js. Direct database calls from the frontend without writing REST APIs."
         },
         "item-5": {
-          "title": "MediaWiki",
-          "description": "Amet praesentium deserunt ex commodi tempore fuga voluptatem."
+          "title": "App Router",
+          "description": "File-system routing that feels as natural as Django/Flask URL patterns but more powerful."
         },
         "item-6": {
-          "title": "Google PaLM",
-          "description": "Amet praesentium deserunt ex commodi tempore fuga voluptatem."
+          "title": "TypeScript",
+          "description": "Type hints on steroids. If you love Python type checking, you'll feel right at home."
         }
       }
     },
     "integration2": {
-      "title": "Integrate with your favorite tools",
-      "description": "Connect seamlessly with popular platforms and services to enhance your workflow.",
-      "primaryButton": "Get Started",
-      "secondaryButton": "See Demo"
+      "title": "Keep Your Python, Upgrade Your Frontend",
+      "description": "You don't have to abandon your existing Python AI code. Learn how to bridge it with modern web interfaces.",
+      "primaryButton": "Start Migration Guide",
+      "secondaryButton": "Python-to-Next.js Cheat Sheet"
     },
     "features": {
-      "title": "Features",
-      "subtitle": "The features of your product",
-      "description": "Write the description of your product here",
+      "title": "Why This is Python Developers' Most Important Architecture Upgrade?",
+      "subtitle": "From Script Writer to System Architect: Complete Skill Transformation",
+      "description": "Not just a frontend framework change, but a complete redefinition of your technical scope and career path",
       "items": {
         "item-1": {
-          "title": "Product Feature One",
-          "description": "Please write the detailed description of feature one here, make it as detailed as possible, make it more attractive to users"
+          "title": "Database Architecture: From SQLAlchemy to Drizzle ORM",
+          "description": "Deep dive into Python vs TypeScript database access patterns. Learn enterprise database design, migration strategies, multi-tenant architecture. Go beyond just using ORMs to understanding data architecture fundamentals."
         },
         "item-2": {
-          "title": "Product Feature Two",
-          "description": "Please write the detailed description of feature two here, make it as detailed as possible, make it more attractive to users"
+          "title": "Payment Systems Architecture: Complete Stripe Integration",
+          "description": "From subscription billing to credit systems, webhook handling to financial reconciliation. Build commercial payment architectures that handle real-world complexities like refunds, disputes, and tax compliance."
         },
         "item-3": {
-          "title": "Product Feature Three",
-          "description": "Please write the detailed description of feature three here, make it as detailed as possible, make it more attractive to users"
+          "title": "Authentication & Authorization: Better Auth Multi-tenant Mastery",
+          "description": "Beyond simple user login to building RBAC permission systems, OAuth integration, SSO single sign-on. Learn modern authentication architecture design for enterprise security requirements."
         },
         "item-4": {
-          "title": "Product Feature Four",
-          "description": "Please write the detailed description of feature four here, make it as detailed as possible, make it more attractive to users"
+          "title": "DevOps & Operations: Modern Development Complete Workflow",
+          "description": "GitHub Actions CI/CD, Vercel deployment strategies, monitoring and alerting systems. Learn how to keep your SaaS products stable in production, handling real users at scale."
         }
       }
     },
     "features2": {
-      "title": "Features2",
-      "subtitle": "The features of your product",
-      "description": "Write the description of your product here",
-      "feature-1": "Product Feature One",
-      "feature-2": "Product Feature Two",
-      "feature-3": "Product Feature Three",
-      "feature-4": "Product Feature Four"
+      "title": "Complete Architecture Learning Path",
+      "subtitle": "22 Chapters Covering Every Critical Aspect of Modern SaaS Development",
+      "description": "From Python backend mindset to full-stack system architect, master each layer of modern web applications",
+      "feature-1": "Part 1-2: Mindset & Core Technologies (Python to JS thinking, Next.js 15 fundamentals)",
+      "feature-2": "Part 3-4: Database & Authentication Architecture (Drizzle vs SQLAlchemy, Better Auth multi-tenant)",
+      "feature-3": "Part 5-6: Business & Operations (Stripe payments, CI/CD, monitoring)",
+      "feature-4": "Part 7-8: Advanced Integration & Best Practices (AI capabilities, testing, deployment)"
     },
     "features3": {
-      "title": "Features3",
-      "subtitle": "The features of your product",
-      "description": "Write the description of your product here",
+      "title": "Enterprise Architecture Deep Dive",
+      "subtitle": "Building Production-Grade Systems, Not Just Demos",
+      "description": "Advanced architectural patterns that separate professional developers from hobbyists",
       "items": {
         "item-1": {
-          "title": "Product Feature One",
-          "description": "Please write the detailed description of feature one here"
+          "title": "Database Architecture Mastery",
+          "description": "Go beyond basic ORM usage. Learn database schema design, migration patterns, performance optimization, and multi-tenant data isolation strategies."
         },
         "item-2": {
-          "title": "Product Feature Two",
-          "description": "Please write the detailed description of feature two here"
+          "title": "Payment Systems Architecture",
+          "description": "Complete Stripe integration with webhook handling, subscription management, refund processing, and financial reconciliation systems."
         },
         "item-3": {
-          "title": "Product Feature Three",
-          "description": "Please write the detailed description of feature three here"
+          "title": "Authentication & Security Architecture",
+          "description": "Implement RBAC, OAuth, SSO, and multi-factor authentication. Handle enterprise security requirements and compliance."
         },
         "item-4": {
-          "title": "Product Feature Four",
-          "description": "Please write the detailed description of feature four here"
+          "title": "DevOps & Production Operations",
+          "description": "CI/CD pipelines, deployment strategies, monitoring systems, and incident response. Keep your SaaS running 24/7."
         },
         "item-5": {
-          "title": "Product Feature Five",
-          "description": "Please write the detailed description of feature five here"
+          "title": "AI Integration (Featured Chapter)",
+          "description": "One of the 22 chapters dedicated to Vercel AI SDK integration. Add AI capabilities to your SaaS without abandoning your core architecture focus."
         },
         "item-6": {
-          "title": "Product Feature Six",
-          "description": "Please write the detailed description of feature six here"
+          "title": "Testing & Quality Assurance",
+          "description": "Comprehensive testing strategies, performance monitoring, and code quality practices that scale with your team."
         }
       }
     },
@@ -900,194 +900,194 @@
     },
     "faqs": {
       "title": "FAQ",
-      "subtitle": "Frequently Asked Questions",
+      "subtitle": "Common Questions about Switching from Python to Next.js",
       "items": {
         "item-1": {
-          "question": "Do you offer a free trial?",
-          "answer": "Yes, we offer a 7-day free trial."
+          "question": "Do I have to abandon Python completely?",
+          "answer": "No. Use Python for the heavy AI processing and Data Science, but use Next.js for the application layer. This Next.js for Python Developers guide teaches you how to bridge them effectively."
         },
         "item-2": {
-          "question": "How do I cancel my subscription?",
-          "answer": "You can cancel your subscription by visiting the billing page."
+          "question": "Is TypeScript hard for Python developers?",
+          "answer": "If you use Type Hints in Python, TypeScript will feel familiar. This guide on Next.js for Python Developers focuses on these similarities, making the transition smooth."
         },
         "item-3": {
-          "question": "Can I change my plan?",
-          "answer": "Yes, you can change your plan at any time by visiting the billing page."
+          "question": "Can I build a chatbot with this stack?",
+          "answer": "Yes. We specifically cover the Vercel AI SDK, which makes building chatbots faster than using Python frameworks alone. Perfect for AI developers."
         },
         "item-4": {
-          "question": "What is the refund policy?",
-          "answer": "We offer a 30-day money-back guarantee if you are not happy with our product."
+          "question": "What about my existing AI models?",
+          "answer": "Keep your Python models! We show you how to create API endpoints for your existing models and integrate them with beautiful Next.js frontends."
         },
         "item-5": {
-          "question": "Can't find what you're looking for?",
-          "answer": "Please contact our customer support team at support@mksaas.com"
+          "question": "How is this different from Streamlit or Gradio?",
+          "answer": "Streamlit/Gradio are great for demos but limited for commercial products. Next.js gives you production-ready features like authentication, payments, and scalability."
         }
       }
     },
     "testimonials": {
-      "title": "Testimonials",
-      "subtitle": "What our customers are saying",
+      "title": "Success Stories",
+      "subtitle": "How Python developers built real AI products with Next.js",
       "items": {
         "item-1": {
-          "name": "Jonathan Yombo",
-          "role": "Software Engineer",
+          "name": "Dr. Sarah Chen",
+          "role": "ML Engineer",
           "image": "https://randomuser.me/api/portraits/men/1.jpg",
-          "quote": "MkSaaS is really extraordinary and very practical, no need to break your head. A real gold mine."
+          "quote": "Finally! A guide that understands Python developers. My NLP model was stuck in a Jupyter notebook, now it's a commercial SaaS product with paying customers."
         },
         "item-2": {
-          "name": "Yves Kalume",
-          "role": "GDE - Android",
+          "name": "Alex Rodriguez",
+          "role": "Data Scientist",
           "image": "https://randomuser.me/api/portraits/men/6.jpg",
-          "quote": "With no experience in webdesign I just redesigned my entire website in a few minutes with tailwindcss thanks to MkSaaS."
+          "quote": "I was terrified of frontend development. This guide made Next.js feel as natural as writing Python code. TypeScript is basically Mypy on steroids."
         },
         "item-3": {
-          "name": "Yucel Faruksahan",
-          "role": "Tailkits Creator",
+          "name": "Dr. Yuki Tanaka",
+          "role": "AI Researcher",
           "image": "https://randomuser.me/api/portraits/men/7.jpg",
-          "quote": "Great work on MkSaaS template. This is one of the best personal website that I have seen so far :)"
+          "quote": "Streamlit was great for demos, but clients laughed when I suggested using it for production. This guide helped me build a real AI SaaS."
         },
         "item-4": {
-          "name": "Anonymous author",
-          "role": "Product Manager",
+          "name": "Michael Kumar",
+          "role": "Python Developer",
           "image": "https://randomuser.me/api/portraits/men/8.jpg",
-          "quote": "I downloaded the one of MkSaaS template which is very clear to understand at the start and you could modify the codes/blocks to fit perfectly on your purpose of the page."
+          "quote": "The Server Actions concept blew my mind. No more writing boring REST APIs. It feels like magic, but it's just clean engineering."
         },
         "item-5": {
-          "name": "Shekinah Tshiokufila",
-          "role": "Senior Software Engineer",
+          "name": "Lisa Thompson",
+          "role": "Data Scientist",
           "image": "https://randomuser.me/api/portraits/men/4.jpg",
-          "quote": "MkSaaS is redefining the standard of web design, with these blocks it provides an easy and efficient way for those who love beauty but may lack the time to implement it."
+          "quote": "I kept my Python models exactly as they were, just wrapped them in FastAPI endpoints. The guide showed me how to create a beautiful Next.js frontend."
         },
         "item-6": {
-          "name": "Oketa Fred",
-          "role": "Fullstack Developer",
+          "name": "David Park",
+          "role": "Backend Developer",
           "image": "https://randomuser.me/api/portraits/men/2.jpg",
-          "quote": "I absolutely love MkSaaS! The component blocks are beautifully designed and easy to use, which makes creating a great-looking website a breeze."
+          "quote": "Coming from Django, the App Router felt immediately familiar. File-system routing is so intuitive. Built my first SaaS in a weekend."
         },
         "item-7": {
-          "name": "Zeki",
-          "role": "Founder of ChatExtend",
+          "name": "Emma Watson",
+          "role": "AI Startup Founder",
           "image": "https://randomuser.me/api/portraits/men/5.jpg",
-          "quote": "MkSaaS is the perfect fusion of simplicity and versatility, enabling us to create UIs that are as stunning as they are user-friendly."
+          "quote": "My AI models were rotting in Git repos. Now I have a production-ready SaaS with authentication, payments, and a beautiful UI. Game changer."
         },
         "item-8": {
-          "name": "Joseph Kitheka",
-          "role": "Fullstack Developer",
+          "name": "Prof. James Liu",
+          "role": "Computer Vision Researcher",
           "image": "https://randomuser.me/api/portraits/men/9.jpg",
-          "quote": "MkSaaS has transformed the way I develop web applications. Their extensive collection of UI components, blocks, and templates has significantly accelerated my workflow."
+          "quote": "Deploying ML models used to be a nightmare. This guide showed me how to bridge my Python models with modern web apps. My research finally has users."
         },
         "item-9": {
-          "name": "Khatab Wedaa",
-          "role": "MerakiUI Creator",
+          "name": "Rachel Green",
+          "role": "Fullstack Developer",
           "image": "https://randomuser.me/api/portraits/men/10.jpg",
-          "quote": "MkSaaS is an elegant, clean, and responsive tailwind css components it's very helpful to start fast with your project."
+          "quote": "The Drizzle ORM section alone was worth the price. It feels just like SQLAlchemy but better. Finally, an ORM that makes sense."
         },
         "item-10": {
-          "name": "Rodrigo Aguilar",
-          "role": "TailwindAwesome Creator",
+          "name": "Tom Anderson",
+          "role": "DevOps Engineer",
           "image": "https://randomuser.me/api/portraits/men/11.jpg",
-          "quote": "I love MkSaaS ❤️. The component blocks are well-structured, simple to use, and beautifully designed. It makes it really easy to have a good-looking website in no time."
+          "quote": "No more managing Nginx configs! Deploying to Vercel is so much easier than maintaining Python servers. This guide saved me countless hours."
         },
         "item-11": {
-          "name": "Eric Ampire",
-          "role": "@GoogleDevExpert for Android",
+          "name": "Dr. Maria Garcia",
+          "role": "AI Consultant",
           "image": "https://randomuser.me/api/portraits/men/12.jpg",
-          "quote": "MkSaaS templates are the perfect solution for anyone who wants to create a beautiful and functional website without any web design experience."
+          "quote": "I can finally charge premium rates for my AI tools instead of just sharing Jupyter notebooks. This guide taught me how to build real products."
         },
         "item-12": {
-          "name": "Roland Tubonge",
+          "name": "Kevin Zhang",
           "role": "Software Engineer",
           "image": "https://randomuser.me/api/portraits/men/13.jpg",
-          "quote": "MkSaaS is so well designed that even with a very poor knowledge of web design you can do miracles. Let yourself be seduced!"
+          "quote": "TypeScript felt daunting at first, but this guide made it so accessible for Python developers. Now I prefer it for new projects."
         }
       }
     },
     "stats": {
-      "title": "Stats",
-      "subtitle": "MkSaaS in numbers",
-      "description": "MkSaaS lets you make AI SaaS in days, simply and effortlessly",
+      "title": "Impact",
+      "subtitle": "Python developers building real AI products",
+      "description": "Join thousands of Python developers who've made the leap from scripts to scalable SaaS products",
       "items": {
         "item-1": {
-          "title": "Stars on GitHub"
+          "title": "Python Developers Transformed"
         },
         "item-2": {
-          "title": "Active Users"
+          "title": "AI Models Deployed"
         },
         "item-3": {
-          "title": "Powered Apps"
+          "title": "SaaS Products Launched"
         }
       }
     },
     "calltoaction": {
-      "title": "Start Building",
-      "description": "MkSaaS lets you make AI SaaS in days, simply and effortlessly",
-      "primaryButton": "Get Started",
-      "secondaryButton": "See Demo"
+      "title": "Start Building Your AI Weapon",
+      "description": "Don't let fear of the frontend stop you. Your Python skills are more valuable than you think.",
+      "primaryButton": "Read the Introduction",
+      "secondaryButton": "Get the Cheat Sheet"
     }
   },
   "AITextPage": {
-    "title": "AI Text Demo",
-    "description": "Analyze web content with AI to extract key information, features, and insights",
-    "content": "Web Content Analyzer",
-    "subtitle": "Enter a website URL to get AI-powered analysis of its content",
+    "title": "AI Text Generation",
+    "description": "Learn how to integrate AI text generation into your Next.js applications using Python models",
+    "content": "AI Text Integration",
+    "subtitle": "Bridge your Python NLP models with modern web interfaces",
     "analyzer": {
-      "title": "Web Content Analyzer",
-      "description": "Analyze any website content using AI to extract structured information",
-      "placeholder": "Enter website URL (e.g., https://example.com)",
-      "button": "Analyze Website",
+      "title": "Text Generation Demo",
+      "description": "See how to connect Python AI models with Next.js frontends for text generation",
+      "placeholder": "Enter your text prompt here...",
+      "button": "Generate Text",
       "loading": {
-        "scraping": "Scraping website content...",
-        "analyzing": "Analyzing content with AI..."
+        "scraping": "Processing with Python model...",
+        "analyzing": "Generating response..."
       },
       "results": {
-        "title": "Analysis Results",
-        "newAnalysis": "Analyze Another Website",
+        "title": "Generated Results",
+        "newAnalysis": "Try Another Prompt",
         "sections": {
-          "title": "Title",
-          "description": "Description",
-          "introduction": "Introduction",
-          "features": "Features",
-          "pricing": "Pricing",
+          "title": "Input",
+          "description": "Generated Text",
+          "introduction": "Model Used",
+          "features": "Processing Time",
+          "pricing": "Credits Used",
           "useCases": "Use Cases",
-          "screenshot": "Website Screenshot"
+          "screenshot": "Response Preview"
         }
       },
       "errors": {
-        "invalidUrl": "Please enter a valid URL starting with http:// or https://",
-        "analysisError": "Failed to analyze website. Please try again.",
+        "invalidUrl": "Please enter a valid text prompt",
+        "analysisError": "Failed to generate text. Please try again.",
         "networkError": "Network error. Please check your connection and try again.",
         "insufficientCredits": "Insufficient credits. Please purchase more credits to continue."
       }
     },
     "features": {
       "scraping": {
-        "title": "Smart Web Scraping",
-        "description": "Advanced web scraping technology extracts clean, structured content from any website"
+        "title": "Python Model Integration",
+        "description": "Connect your existing Python NLP models with Next.js frontends seamlessly"
       },
       "analysis": {
-        "title": "AI-Powered Analysis",
-        "description": "Intelligent AI analysis extracts key insights, features, and structured information"
+        "title": "Real-time Generation",
+        "description": "Stream AI-generated text directly to your users using Next.js streaming capabilities"
       },
       "results": {
-        "title": "Structured Results",
-        "description": "Get organized, easy-to-read results with clear sections and actionable insights"
+        "title": "Production Ready",
+        "description": "Deploy text generation features that scale with user demand and handle errors gracefully"
       }
     }
   },
   "AIImagePage": {
-    "title": "AI Image",
-    "description": "MkSaaS lets you make AI SaaS in days, simply and effortlessly"
+    "title": "AI Image Generation",
+    "description": "Learn how to integrate Python image generation models with Next.js applications"
   },
   "AIChatPage": {
-    "title": "AI Chat",
-    "description": "MkSaaS lets you make AI SaaS in days, simply and effortlessly"
+    "title": "AI Chat Integration",
+    "description": "Build chat interfaces that connect Python AI models with modern web UIs"
   },
   "AIVideoPage": {
-    "title": "AI Video",
-    "description": "MkSaaS lets you make AI SaaS in days, simply and effortlessly"
+    "title": "AI Video Processing",
+    "description": "Process and generate video content using Python models in Next.js applications"
   },
   "AIAudioPage": {
-    "title": "AI Audio",
-    "description": "MkSaaS lets you make AI SaaS in days, simply and effortlessly"
+    "title": "AI Audio Processing",
+    "description": "Integrate Python audio processing and transcription with Next.js applications"
   }
 }

@@ -1,9 +1,9 @@
+import fs from 'fs';
+import path from 'path';
 // scripts/import.ts
-import { Client } from "@notionhq/client";
-import { NotionToMarkdown } from "notion-to-md";
-import fs from "fs";
-import path from "path";
-import axios from "axios";
+import { Client } from '@notionhq/client';
+import axios from 'axios';
+import { NotionToMarkdown } from 'notion-to-md';
 import 'dotenv/config';
 import dotenv from 'dotenv';
 
@@ -41,7 +41,8 @@ function isValidNotionId(pageId: string): boolean {
   // 1. 原始32位ID: a1b2c3d4e5f6789012345678901234ab
   // 2. 完整URL: https://www.notion.so/Your-Page-Title-a1b2c3d4e5f6789012345678901234ab
   const idRegex = /^[a-f0-9]{32}$/;
-  const urlRegex = /^https:\/\/www\.notion\.so\/[a-zA-Z0-9-]+-([a-f0-9]{32})(\?v=[a-f0-9]+)?$/;
+  const urlRegex =
+    /^https:\/\/www\.notion\.so\/[a-zA-Z0-9-]+-([a-f0-9]{32})(\?v=[a-f0-9]+)?$/;
 
   if (idRegex.test(pageId)) {
     return true;
@@ -56,10 +57,11 @@ function isValidNotionId(pageId: string): boolean {
 
 // 从URL中提取纯ID
 function extractPageId(pageId: string): string {
-  const urlMatch = pageId.match(/^https:\/\/www\.notion\.so\/[a-zA-Z0-9-]+-([a-f0-9]{32})(\?v=[a-f0-9]+)?$/);
+  const urlMatch = pageId.match(
+    /^https:\/\/www\.notion\.so\/[a-zA-Z0-9-]+-([a-f0-9]{32})(\?v=[a-f0-9]+)?$/
+  );
   return urlMatch ? urlMatch[1] : pageId;
 }
-
 
 // 智能分类生成函数
 function generateCategories(content: string): string[] {
@@ -71,17 +73,31 @@ function generateCategories(content: string): string[] {
   if (contentLower.includes('typescript')) categories.push('typescript');
   if (contentLower.includes('python')) categories.push('python');
   if (contentLower.includes('react')) categories.push('react');
-  if (contentLower.includes('next.js') || contentLower.includes('nextjs')) categories.push('nextjs');
-  if (contentLower.includes('node') && contentLower.includes('node.js')) categories.push('nodejs');
+  if (contentLower.includes('next.js') || contentLower.includes('nextjs'))
+    categories.push('nextjs');
+  if (contentLower.includes('node') && contentLower.includes('node.js'))
+    categories.push('nodejs');
 
   // 概念检测
-  if (contentLower.includes('tutorial') || contentLower.includes('guide') || contentLower.includes('learn')) {
+  if (
+    contentLower.includes('tutorial') ||
+    contentLower.includes('guide') ||
+    contentLower.includes('learn')
+  ) {
     categories.push('tutorial');
   }
-  if (contentLower.includes('async') || contentLower.includes('event loop') || contentLower.includes('promise')) {
+  if (
+    contentLower.includes('async') ||
+    contentLower.includes('event loop') ||
+    contentLower.includes('promise')
+  ) {
     categories.push('async');
   }
-  if (contentLower.includes('web') || contentLower.includes('api') || contentLower.includes('server')) {
+  if (
+    contentLower.includes('web') ||
+    contentLower.includes('api') ||
+    contentLower.includes('server')
+  ) {
     categories.push('web-development');
   }
 
@@ -97,10 +113,14 @@ function generateCategories(content: string): string[] {
 function generateDescription(title: string, content: string): string {
   // 尝试找到第一个非标题段落作为描述
   const firstParagraph = content.match(/^##.+?\n\n([^#\n].+?)(?:\n\n|\n#|$)/);
-  if (firstParagraph && firstParagraph[1]) {
+  if (firstParagraph?.[1]) {
     let description = firstParagraph[1].trim();
     // 移除多余的换行符和特殊字符
-    description = description.replace(/\n+/g, ' ').replace(/\*\*/g, '').replace(/`/g, '');
+    description = description
+      .replace(/\n+/g, ' ')
+      .replace(/\*\*/g, '')
+      .replace(/`/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1'); // 移除markdown链接，保留文本
 
     // 限制长度
     if (description.length > 160) {
@@ -110,33 +130,66 @@ function generateDescription(title: string, content: string): string {
     return description;
   }
 
-  // 如果找不到合适的第一段话，生成通用描述
-  return `Complete guide about ${title}. Learn best practices, patterns, and advanced techniques.`;
+  // 尝试找到第一个包含实际内容的段落（不包含代码块）
+  const contentLines = content.split('\n');
+  for (let i = 0; i < contentLines.length; i++) {
+    const line = contentLines[i].trim();
+    // 跳过标题、空行、代码行
+    if (
+      line &&
+      !line.startsWith('#') &&
+      !line.startsWith('```') &&
+      !line.startsWith('    ') &&
+      !line.match(/^[*-]\s+/) && // 跳过列表项
+      line.length > 20 && // 确保有足够的内容
+      !line.includes('import ') &&
+      !line.includes('export ')
+    ) {
+      // 跳过导入导出语句
+
+      let description = line
+        .replace(/\*\*/g, '')
+        .replace(/`/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+
+      // 限制长度
+      if (description.length > 160) {
+        description = description.substring(0, 157) + '...';
+      }
+
+      return description;
+    }
+  }
+
+  // 分析内容生成更智能的描述
+  const contentLower = content.toLowerCase();
+  if (
+    contentLower.includes('javascript') ||
+    contentLower.includes('typescript')
+  ) {
+    return `深入探讨${title}的JavaScript/TypeScript实现，涵盖核心概念、最佳实践和高级技巧。`;
+  }
+  if (contentLower.includes('react') || contentLower.includes('next.js')) {
+    return `全面的${title}React/Next.js开发指南，包含组件设计、状态管理和性能优化。`;
+  }
+  if (contentLower.includes('python')) {
+    return `${title}Python开发完整教程，从基础语法到高级应用的实战指南。`;
+  }
+  if (contentLower.includes('tutorial') || contentLower.includes('guide')) {
+    return `${title}详细教程，循序渐进学习核心概念和实用技巧。`;
+  }
+
+  // 如果没有匹配到特定模式，生成通用描述
+  return `深入解析${title}，涵盖理论基础、实践应用和高级开发技巧。`;
 }
 
 // 内容清理函数
 function cleanMarkdownContent(content: string): string {
-  return content
-    // 移除连续的空行（最多保留一个空行）
-    .replace(/\n{3,}/g, '\n\n')
-    // 清理中文双引号为标准英文双引号
-    .replace(/"/g, '"')
-    // 修复加粗标记后的重复文本问题（如 "**Python:**Python" -> "**Python:**"）
-    .replace(/\*\*([^*:]+):\*\*([a-zA-Z]+)/gm, '**$1:**')
-    // 修复连续加粗标记问题（如 "**JavaScript (ESM):**JavaScript" -> "**JavaScript (ESM):**"）
-    .replace(/\*\*([^*:]+):\*\*\1([a-zA-Z]*)/gm, '**$1:**')
-    // 修复代码块前的格式问题
-    .replace(/:\n\n    `/g, ':\n\n    ```\n    `')
-    // 修复代码块语言标识：将 python 改为 javascript（当内容包含 JS 关键字时）
-    .replace(/```python\n([\s\S]*?(import|from|const|let|function|async|await|=>|console\.|\.then\(|\.catch\()[\s\S]*?)\n```/g, '```javascript\n$1\n```')
-    // 修复代码块语言标识：将 python 改为 typescript（当内容包含 TS 关键字时）
-    .replace(/```python\n([\s\S]*?(interface|type|Promise<|: string|: number|: boolean|: void)[\s\S]*?)\n```/g, '```typescript\n$1\n```')
-    // 清理多余的空格
-    .replace(/[ \t]+$/gm, '')
-    // 确保标题前后只有一个空行
-    .replace(/(\n#{1,6}[^#\n]*\n)\n+/g, '$1\n')
-    // 移除文件开头和结尾的多余空行
-    .trim();
+  return (
+    content
+      // 移除连续的空行（最多保留一个空行）
+      .replace(/\n{3,}/g, '\n\n')
+  );
 }
 
 // 获取命令行参数
@@ -144,21 +197,25 @@ const pageId = process.argv[2];
 const slug = process.argv[3];
 
 if (!pageId || !slug) {
-  console.log("❌ 错误: 缺少参数");
-  console.log("✅ 正确用法: npx tsx scripts/import.ts <Notion页面ID> <英文网址别名>");
-  console.log("📝 示例: npx tsx scripts/import.ts a1b2c3d4e5f6789012345678901234ab my-article-title");
+  console.log('❌ 错误: 缺少参数');
+  console.log(
+    '✅ 正确用法: npx tsx scripts/import.ts <Notion页面ID> <英文网址别名>'
+  );
+  console.log(
+    '📝 示例: npx tsx scripts/import.ts a1b2c3d4e5f6789012345678901234ab my-article-title'
+  );
   process.exit(1);
 }
 
 // 验证参数
 if (!isValidNotionId(pageId)) {
-  console.log("❌ 错误: Notion页面ID格式不正确");
+  console.log('❌ 错误: Notion页面ID格式不正确');
   process.exit(1);
 }
 
 const cleanSlug = sanitizeSlug(slug);
 if (!cleanSlug) {
-  console.log("❌ 错误: 网址别名包含无效字符");
+  console.log('❌ 错误: 网址别名包含无效字符');
   process.exit(1);
 }
 
@@ -170,7 +227,7 @@ const notion = new Client({ auth: process.env.NOTION_TOKEN });
 const n2m = new NotionToMarkdown({ notionClient: notion });
 
 // 🔧 自定义功能：自动下载图片到本地 public 文件夹
-n2m.setCustomTransformer("image", async (block) => {
+n2m.setCustomTransformer('image', async (block) => {
   try {
     const { image } = block as ImageBlock;
     if (!image) {
@@ -186,16 +243,19 @@ n2m.setCustomTransformer("image", async (block) => {
 
     // 获取图片后缀 (jpg/png/svg/webp)
     const urlPath = new URL(imageUrl).pathname;
-    const extension = urlPath.split('.').pop()?.split('?')[0]?.toLowerCase() || 'png';
+    const extension =
+      urlPath.split('.').pop()?.split('?')[0]?.toLowerCase() || 'png';
 
     // 验证文件扩展名
     const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
-    const safeExtension = validExtensions.includes(extension) ? extension : 'png';
+    const safeExtension = validExtensions.includes(extension)
+      ? extension
+      : 'png';
 
     const filename = `${cleanSlug}-${block.id}.${safeExtension}`;
 
     // 图片保存路径: public/images/blog/
-    const localDir = path.join(process.cwd(), "public", "images", "blog");
+    const localDir = path.join(process.cwd(), 'public', 'images', 'blog');
     const localPath = path.join(localDir, filename);
 
     // 如果文件夹不存在，自动创建
@@ -206,11 +266,11 @@ n2m.setCustomTransformer("image", async (block) => {
     // 下载图片（带超时和错误处理）
     const response = await axios({
       url: imageUrl,
-      responseType: "stream",
+      responseType: 'stream',
       timeout: 30000, // 30秒超时
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; NotionImporter/1.0)'
-      }
+        'User-Agent': 'Mozilla/5.0 (compatible; NotionImporter/1.0)',
+      },
     });
 
     const writer = fs.createWriteStream(localPath);
@@ -232,8 +292,12 @@ n2m.setCustomTransformer("image", async (block) => {
     // 返回 MDX 标准图片语法
     return `![${filename}](/images/blog/${filename})`;
   } catch (error) {
-    const imageUrl = (block as any).image?.file?.url || (block as any).image?.external?.url;
-    console.error(`⚠️ 图片下载失败:`, error instanceof Error ? error.message : error);
+    const imageUrl =
+      (block as any).image?.file?.url || (block as any).image?.external?.url;
+    console.error(
+      '⚠️ 图片下载失败:',
+      error instanceof Error ? error.message : error
+    );
     // 如果下载失败，保留原链接但添加警告
     return `![图片下载失败](${imageUrl})`;
   }
@@ -244,18 +308,21 @@ async function main() {
     console.log(`🔍 正在连接 Notion，读取页面: ${purePageId}...`);
 
     // 1. 获取页面标题和元数据
-    let pageDetails;
+    let pageDetails: any;
     try {
       pageDetails = await notion.pages.retrieve({
-        page_id: purePageId
+        page_id: purePageId,
       });
     } catch (error) {
-      console.error('❌ 获取 Notion 页面失败:', error instanceof Error ? error.message : error);
+      console.error(
+        '❌ 获取 Notion 页面失败:',
+        error instanceof Error ? error.message : error
+      );
       throw new Error('无法访问 Notion 页面，请检查页面ID和权限');
     }
 
     // 尝试获取标题（适配不同类型的 Title 属性）
-    let title = "未命名文章";
+    let title = '未命名文章';
     const properties = (pageDetails as NotionPageDetails).properties;
 
     if (properties?.Name?.title?.[0]?.plain_text) {
@@ -270,13 +337,17 @@ async function main() {
 
     // 2. 获取正文并转为 Markdown
     console.log('🔄 正在转换页面内容为 Markdown...');
-    let mdblocks, mdString;
+    let mdblocks: any;
+    let mdString: any;
 
     try {
       mdblocks = await n2m.pageToMarkdown(purePageId);
       mdString = n2m.toMarkdownString(mdblocks);
     } catch (error) {
-      console.error('❌ 转换内容失败:', error instanceof Error ? error.message : error);
+      console.error(
+        '❌ 转换内容失败:',
+        error instanceof Error ? error.message : error
+      );
       throw new Error('无法转换页面内容，请检查页面结构和权限');
     }
 
@@ -307,14 +378,18 @@ async function main() {
     const currentDate = new Date().toISOString().split('T')[0];
 
     // 查找文章中的第一张图片作为封面图，如果没有图片则使用默认图片
-    const firstImageMatch = cleanedContent.match(/!\[.*?\]\(\/images\/blog\/([^)]+)\)/);
-    const coverImage = firstImageMatch ? `/images/blog/${firstImageMatch[1]}` : '/images/blog/post-1.png';
+    const firstImageMatch = cleanedContent.match(
+      /!\[.*?\]\(\/images\/blog\/([^)]+)\)/
+    );
+    const coverImage = firstImageMatch
+      ? `/images/blog/${firstImageMatch[1]}`
+      : '/images/blog/post-1.png';
 
     // 如果找到了图片，显示信息
     if (firstImageMatch) {
       console.log(`🖼️ 使用文章中的图片作为封面: ${firstImageMatch[1]}`);
     } else {
-      console.log(`🖼️ 文章中没有图片，使用默认封面图`);
+      console.log('🖼️ 文章中没有图片，使用默认封面图');
     }
 
     const fileContent = `---
@@ -322,7 +397,7 @@ title: "${title.replace(/"/g, '\\"')}"
 description: "${smartDescription}"
 date: "${currentDate}"
 published: true
-categories: [${smartCategories.map(cat => `"${cat}"`).join(', ')}]
+categories: [${smartCategories.map((cat) => `"${cat}"`).join(', ')}]
 author: "notion-import"
 image: "${coverImage}"
 ---
@@ -331,7 +406,12 @@ ${cleanedContent}
 `;
 
     // 4. 写入文件
-    const outputPath = path.join(process.cwd(), "content", "blog", `${cleanSlug}.mdx`);
+    const outputPath = path.join(
+      process.cwd(),
+      'content',
+      'blog',
+      `${cleanSlug}.mdx`
+    );
 
     // 确保 content/blog 目录存在
     const blogDir = path.dirname(outputPath);
@@ -347,18 +427,27 @@ ${cleanedContent}
     try {
       fs.writeFileSync(outputPath, fileContent, 'utf8');
     } catch (error) {
-      console.error('❌ 写入文件失败:', error instanceof Error ? error.message : error);
+      console.error(
+        '❌ 写入文件失败:',
+        error instanceof Error ? error.message : error
+      );
       throw new Error('无法写入文件，请检查文件权限');
     }
 
-    console.log(`\n🎉 导入成功！`);
+    console.log('\n🎉 导入成功！');
     console.log(`📄 文章已生成: content/blog/${cleanSlug}.mdx`);
-    console.log(`🖼️  图片已下载至: public/images/blog/`);
-    console.log(`📊 统计: ${mdString.parent.length} 字符 | ${mdblocks.length} 个内容块`);
-    console.log(`\n💡 提示: 请根据需要修改 frontmatter 中的 description 和 categories 字段`);
-
+    console.log('🖼️  图片已下载至: public/images/blog/');
+    console.log(
+      `📊 统计: ${mdString.parent.length} 字符 | ${mdblocks.length} 个内容块`
+    );
+    console.log(
+      '\n💡 提示: 请根据需要修改 frontmatter 中的 description 和 categories 字段'
+    );
   } catch (error) {
-    console.error('\n❌ 导入失败:', error instanceof Error ? error.message : error);
+    console.error(
+      '\n❌ 导入失败:',
+      error instanceof Error ? error.message : error
+    );
     process.exit(1);
   }
 }

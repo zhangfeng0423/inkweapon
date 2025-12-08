@@ -1,0 +1,70 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- 定义渐变 -->
+  <defs>
+    <!-- 背景渐变 -->
+    <radialGradient id="bgGradient">
+      <stop offset="0%" style="stop-color:#1E293B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0F172A;stop-opacity:1" />
+    </radialGradient>
+
+    <!-- 主图形渐变 -->
+    <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00D4FF;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0099FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0066FF;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- 高光渐变 -->
+    <linearGradient id="highlightGradient">
+      <stop offset="0%" style="stop-color:#FF6B35;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF8C42;stop-opacity:0.8" />
+    </linearGradient>
+  </defs>
+
+  <!-- 背景圆形 -->
+  <circle cx="100" cy="100" r="95" fill="url(#bgGradient)"/>
+
+  <!-- 主体武器形状 - 墨水剑刃 -->
+  <g transform="translate(100, 100)">
+    <!-- 剑刃主体 -->
+    <path d="M -15 -70 L 0 70 L 15 -70 L 8 -60 L 0 40 L -8 -60 Z"
+          fill="url(#mainGradient)"
+          opacity="0.9"/>
+
+    <!-- 墨水流动效果 -->
+    <path d="M -12 -65 Q -3 -30, 0 60 Q 3 -30, 12 -65"
+          stroke="#00D4FF"
+          stroke-width="2"
+          fill="none"
+          opacity="0.7"/>
+
+    <!-- 左侧代码括号 -->
+    <path d="M -40 -30 Q -50 -10, -50 10 Q -50 30, -40 50"
+          stroke="url(#highlightGradient)"
+          stroke-width="3"
+          fill="none"
+          stroke-linecap="round"/>
+
+    <!-- 右侧代码括号 -->
+    <path d="M 40 -30 Q 50 -10, 50 10 Q 50 30, 40 50"
+          stroke="url(#highlightGradient)"
+          stroke-width="3"
+          fill="none"
+          stroke-linecap="round"/>
+
+    <!-- 中心墨滴装饰 -->
+    <circle cx="0" cy="-75" r="4" fill="#00D4FF" opacity="0.8"/>
+
+    <!-- 底部墨迹扩散 -->
+    <ellipse cx="0" cy="75" rx="12" ry="4" fill="#00D4FF" opacity="0.4"/>
+  </g>
+
+  <!-- 品牌缩写 -->
+  <text x="100" y="110"
+        font-family="'Courier New', monospace"
+        font-size="16"
+        font-weight="bold"
+        fill="#FFFFFF"
+        text-anchor="middle"
+        opacity="0.9">IW</text>
+</svg>

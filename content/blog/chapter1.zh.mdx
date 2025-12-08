@@ -1,12 +1,13 @@
 ---
-title: "chapter1"
-description: "Complete guide about chapter1. Learn best practices, patterns, and advanced techniques."
-date: "2025-12-06"
+title: "第 1 章：你好，JavaScript (Python 开发者视角)"
+description: "这是你作为 Python 后端开发者需要经历的第一个，也是最关键的一个思维转变。"
+date: "2025-12-07"
 published: true
 categories: ["javascript", "typescript", "python"]
 author: "notion-import"
 image: "/images/blog/post-1.png"
 ---
+
 
 ## 第 1 章：你好，JavaScript (Python 开发者视角)
 
@@ -92,25 +93,25 @@ Node.js 在其核心只有一个 **单线程事件循环 (Single-Threaded Event 
 
 这很简单。你已经习惯了 Python 的 `import`。
 
-- **Python:**
+- **Python:**Python
 
-    ```javascript
+    ```python
     # 从 'my_module.py' 导入
     from my_module import my_function, MyClass
-
+    
     # 导入整个模块
     import numpy as np
     ```
 
-- **JavaScript (ESM):**
+- **JavaScript (ESM):**JavaScript
 
     ```typescript
     // 从 './myModule.js' (或 .ts, .tsx) 导入
     import { myFunction, MyClass } from './myModule';
-
+    
     // 导入默认导出
     import myDefaultExport from './myModule';
-
+    
     // 导入所有导出，并命名为 'MyModule'
     import * as MyModule from './myModule';
     ```
@@ -121,14 +122,14 @@ Node.js 在其核心只有一个 **单线程事件循环 (Single-Threaded Event 
 
 如果你使用过 Python 的 `asyncio` 和 `async/await`，你已经领先了 90%。
 
-- **Python:**
+- **Python:**Python
 
-    ```typescript
+    ```python
     async def fetch_data_from_db():
         # 模拟 I/O 延迟
         await asyncio.sleep(1)
         return {"data": 123}
-
+    
     async def main():
         try:
             data = await fetch_data_from_db()
@@ -137,7 +138,7 @@ Node.js 在其核心只有一个 **单线程事件循环 (Single-Threaded Event 
             print(f"An error occurred: {e}")
     ```
 
-- **JavaScript (TS):**
+- **JavaScript (TS):**TypeScript
 
     ```typescript
     // 一个返回 Promise<T> 的函数
@@ -146,7 +147,7 @@ Node.js 在其核心只有一个 **单线程事件循环 (Single-Threaded Event 
         await new Promise(resolve => setTimeout(resolve, 1000));
         return { data: 123 };
     }
-
+    
     async function main() {
         try {
             const data = await fetchDataFromDb();
