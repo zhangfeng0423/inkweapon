@@ -1,4 +1,3 @@
-import { betterFetch } from '@better-fetch/fetch';
 import createMiddleware from 'next-intl/middleware';
 import { type NextRequest, NextResponse } from 'next/server';
 import {
@@ -7,8 +6,6 @@ import {
   LOCALE_COOKIE_NAME,
   routing,
 } from './i18n/routing';
-import type { Session } from './lib/auth-types';
-import { getBaseUrl } from './lib/urls/urls';
 import {
   DEFAULT_LOGIN_REDIRECT,
   protectedRoutes,
@@ -53,19 +50,12 @@ export default async function middleware(req: NextRequest) {
     }
   }
 
-  // do not use getSession() here, it will cause error related to edge runtime
-  // const session = await getSession();
-  const { data: session } = await betterFetch<Session>(
-    '/api/auth/get-session',
-    {
-      baseURL: getBaseUrl(),
-      headers: {
-        cookie: req.headers.get('cookie') || '', // Forward the cookies from the request
-      },
-    }
-  );
-  const isLoggedIn = !!session;
-  // console.log('middleware, isLoggedIn', isLoggedIn);
+  // ⚠️ Edge Runtime 修复：不要在 middleware 中发 HTTP 请求
+  // 只检查 session cookie 是否存在，而不是调用 API
+  // Better Auth 默认的 session cookie 名称是 "better-auth.session_token"
+  const sessionCookie = req.cookies.get('better-auth.session_token');
+  const isLoggedIn = !!sessionCookie?.value;
+  console.log('middleware, isLoggedIn', isLoggedIn);
 
   // Get the pathname of the request (e.g. /zh/dashboard to /dashboard)
   const pathnameWithoutLocale = getPathnameWithoutLocale(
