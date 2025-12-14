@@ -118,21 +118,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
         {/* left column (blog post content) */}
         <div className="lg:col-span-2 flex flex-col">
           {/* Basic information */}
-          <div className="space-y-8">
-            {/* blog post image */}
-            <div className="group overflow-hidden relative aspect-16/9 rounded-lg transition-all border">
-              {image && (
-                <Image
-                  src={image}
-                  alt={title || 'image for blog post'}
-                  title={title || 'image for blog post'}
-                  loading="eager"
-                  fill
-                  className="object-cover"
-                />
-              )}
-            </div>
-
+          <div className="space-y-6">
             {/* blog post date and premium badge */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">

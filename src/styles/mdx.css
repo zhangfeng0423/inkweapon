@@ -6,3 +6,21 @@
 @import "fumadocs-ui/css/preset.css";
 
 @source '../../node_modules/fumadocs-ui/dist/**/*.js';
+
+/* Hide all images in blog posts and MDX content */
+.prose img,
+.blog-post img,
+.mdx-content img,
+article img,
+.post-content img,
+img[alt*="image for blog post"] {
+  display: none !important;
+}
+
+/* Hide image containers and wrappers */
+.image-wrapper,
+.blog-image,
+.blog-post-image,
+.post-image-container {
+  display: none !important;
+}

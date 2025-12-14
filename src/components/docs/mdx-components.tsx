@@ -1,4 +1,4 @@
-import { ImageWrapper } from '@/components/docs/image-wrapper';
+// import { ImageWrapper } from '@/components/docs/image-wrapper';
 import { Wrapper } from '@/components/docs/wrapper';
 import { YoutubeVideo } from '@/components/docs/youtube-video';
 import { PremiumContent } from '@/components/premium/premium-content';
@@ -39,7 +39,7 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     Folder,
     Files,
     blockquote: Callout as unknown as FC<ComponentProps<'blockquote'>>,
-    img: ImageWrapper,
+    // img: ImageWrapper, // Disabled to prevent image rendering in blog posts
   };
 
   return {
