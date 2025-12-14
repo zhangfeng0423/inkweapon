@@ -131,13 +131,13 @@ export function PricingTable({
         return (
           <div
             className={cn(
-              'grid gap-6',
+              'grid gap-4 sm:gap-6 px-2 sm:px-0',
               // Universal solution that handles any number of cards
               totalVisiblePlans === 1 && 'grid-cols-1 max-w-md mx-auto w-full',
               totalVisiblePlans === 2 &&
                 'grid-cols-1 md:grid-cols-2 max-w-2xl mx-auto w-full',
               totalVisiblePlans >= 3 &&
-                'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3'
             )}
           >
             {/* Render free plans (always visible) */}

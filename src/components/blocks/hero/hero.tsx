@@ -81,7 +81,7 @@ export default function HeroSection() {
                   preset="fade-in-blur"
                   speedSegment={0.3}
                   as="h1"
-                  className="mt-8 text-balance text-5xl font-bricolage-grotesque lg:mt-16 xl:text-[5rem]"
+                  className="mt-8 text-balance text-3xl sm:text-4xl font-bricolage-grotesque lg:mt-16 lg:text-5xl xl:text-[5rem]"
                 >
                   {t('title')}
                 </TextEffect>
@@ -93,7 +93,7 @@ export default function HeroSection() {
                   speedSegment={0.3}
                   delay={0.5}
                   as="p"
-                  className="mx-auto mt-8 max-w-4xl text-balance text-lg text-muted-foreground"
+                  className="mx-auto mt-8 max-w-4xl text-balance text-base sm:text-lg text-muted-foreground"
                 >
                   {t('description')}
                 </TextEffect>
@@ -111,7 +111,7 @@ export default function HeroSection() {
                     },
                     ...transitionVariants,
                   }}
-                  className="mt-12 flex flex-row items-center justify-center gap-4"
+                  className="mt-8 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
                 >
                   <div
                     key={1}
@@ -156,7 +156,7 @@ export default function HeroSection() {
                 ...transitionVariants,
               }}
             >
-              <div className="relative -mr-56 mt-8 overflow-hidden px-2 sm:mr-0 sm:mt-12 md:mt-20">
+              <div className="relative -mr-8 mt-8 overflow-hidden px-4 sm:-mr-16 sm:px-6 sm:mt-12 md:mr-0 md:px-2 md:mt-20">
                 <div
                   aria-hidden
                   className="bg-linear-to-b to-muted/50 absolute inset-0 z-10 from-transparent from-35%"

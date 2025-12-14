@@ -64,9 +64,9 @@ export default function FeaturesSection() {
         />
 
         <div className="grid gap-12 sm:px-12 lg:grid-cols-12 lg:gap-24 lg:px-0">
-          <div className="lg:col-span-5 flex flex-col gap-8">
+          <div className="lg:col-span-5 flex flex-col gap-8 order-2 lg:order-1">
             <div className="lg:pr-0 text-left">
-              <h3 className="text-3xl font-semibold lg:text-4xl text-foreground leading-normal py-1">
+              <h3 className="text-2xl font-semibold sm:text-3xl lg:text-4xl text-foreground leading-normal py-1">
                 {t('title')}
               </h3>
               <p className="mt-4 text-muted-foreground">{t('description')}</p>
@@ -124,7 +124,7 @@ export default function FeaturesSection() {
             </Accordion>
           </div>
 
-          <div className="bg-background w-full relative flex overflow-hidden rounded-2xl border p-2 lg:h-auto lg:col-span-7">
+          <div className="bg-background w-full relative flex overflow-hidden rounded-2xl border p-2 lg:h-auto lg:col-span-7 order-1 lg:order-2">
             <div className="aspect-76/59 bg-background relative w-full rounded-2xl">
               <AnimatePresence mode="wait">
                 <motion.div

@@ -6,8 +6,8 @@ export default function PricingSection() {
   const t = useTranslations('HomePage.pricing');
 
   return (
-    <section id="pricing" className="px-4 py-16">
-      <div className="mx-auto max-w-6xl px-6 space-y-16">
+    <section id="pricing" className="px-4 py-12 sm:py-16">
+      <div className="mx-auto max-w-6xl px-2 sm:px-6 space-y-12 sm:space-y-16">
         <HeaderSection
           subtitle={t('subtitle')}
           subtitleAs="h2"
