@@ -28,7 +28,8 @@ export default function BlogCard({ locale, post }: BlogCardProps) {
           <div className="flex items-center justify-between gap-2 mb-3">
             {/* categories */}
             <div className="flex flex-wrap gap-1">
-              {blogCategories && blogCategories.length > 0 && (
+              {blogCategories &&
+                blogCategories.length > 0 &&
                 blogCategories.map((category, index) => (
                   <span
                     key={`${category?.slugs[0]}-${index}`}
@@ -36,8 +37,7 @@ export default function BlogCard({ locale, post }: BlogCardProps) {
                   >
                     {category?.data.name}
                   </span>
-                ))
-              )}
+                ))}
             </div>
 
             {/* Premium badge - right side */}

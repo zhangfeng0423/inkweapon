@@ -1,0 +1,231 @@
+---
+title: "第 8 章：SAAS 认证：Auth 方案对比"
+description: "在第 7 章中，我们选择了 ORM 路径，决定使用 Drizzle 来掌控我们的数据库。这个决定会直接影响我们的认证（Authentication）方案。"
+date: "2026-01-06"
+published: true
+categories: ["typescript", "python", "react"]
+author: "notion-import"
+image: "/images/blog/post-1.png"
+---
+
+
+# 第 8 章：SAAS 认证：Auth 方案对比
+
+在第 7 章中，我们选择了 ORM 路径，决定使用 Drizzle 来掌控我们的数据库。这个决定会直接影响我们的认证（Authentication）方案。
+
+如果你在 Python 世界中习惯了 Django Admin 和 `django.contrib.auth`，你会喜欢它为你处理好了一切：用户模型、会话、密码哈希、权限。如果你用 Flask，你可能会组合使用 Flask-Login 和-SQLAlchemy。
+
+在 Next.js 生态中，认证同样是一个需要权衡的十字路口，并且它与你上一章的数据库选择紧密相关。
+
+## 8.1. 路径 A (BaaS)：Supabase Auth
+
+如果我们选择了 Supabase 平台，那么认证方案几乎是自动确定的：**使用 Supabase Auth**。
+
+### 8.1.1. 优势：与 RLS 完美集成，开箱即用
+
+Supabase Auth 不是一个独立的库，它是 Supabase 平台的核心功能。
+
+- **开箱即用**：它提供了完整的用户管理 UI、OAuth（Google, GitHub...）、邮箱密码、魔法链接（Magic Links）等所有功能。
+- **完美集成 RLS**：这是它最大的杀手锏。还记得第 7 章的 RLS 策略吗？
+
+    ```plain text
+    -- Supabase RLS 策略
+    CREATE POLICY "用户只能查看自己的项目"
+    ON projects FOR SELECT
+    USING ( auth.uid() = owner_id );
+    ```
+
+    这里的 `auth.uid()` 函数是由 Supabase Auth 自动注入到数据库上下文的。当用户通过 Supabase 客户端登录后，Supabase 会生成一个 JWT，这个 JWT 在被发送到数据库时，PostgreSQL 能够识别它并知道“当前用户是谁”。
+
+    这种**认证与数据库安全策略的深度绑定**是 Supabase 模式的核心优势。你的应用层代码几乎不需要写任何权限检查，因为数据库已经帮你搞定了。
+
+**缺点**：显而易见，你被**深度锁定**在 Supabase 平台。你的 `users` 表、认证逻辑和安全模型都由 Supabase 控制。
+
+## 8.2. 路径 B (ORM)：better-auth - [本书实战项目选择]
+
+由于我们选择了 Drizzle (ORM 路径)，我们放弃了 Supabase 的集成包。因此，我们需要一个**独立的、可自托管的 (self-hosted)** 认证库，它必须能和我们的 Drizzle Schema 完美配合。
+
+在 Next.js 生态中，最著名的独立认证库是 **Auth.js** (以前叫 NextAuth.js)。
+
+**`better-auth`** (一个假设的、我们项目中使用的库，通常基于 Auth.js V5 或类似理念) 代表了这种模式的演进方向：一个与框架无关、高度可定制、能与任意 ORM 适配的认证方案。
+
+### 8.2.1. 优势：与 Drizzle 适配，高度可定制化
+
+选择 `better-auth` (或 Auth.js) 的理由，和我们选择 Drizzle 的理由如出一辙：**完全的控制权**。
+
+1. **数据库掌控**：`better-auth` **不**拥有你的用户表。它提供的是**认证逻辑**，而**数据存储**则通过一个“适配器”（Adapter）交给你。我们实战项目使用的就是 `DrizzleAdapter`。
+2. **Schema 归你**：这意味着 `users` 表（以及 `sessions`, `accounts` 等表）完全由我们在 `src/db/schema.ts` 中定义（就像第 7 章中那样）。我们可以随意给 `users` 表添加字段（比如 `credits` 点数、`stripeCustomerId`），`better-auth` 不会干涉。
+3. **高度可定制**：你可以完全控制登录流程、会话（Session）策略（JWT vs. Database Sessions）、OAuth 回调（Callbacks）等一切。
+4. **框架无关**：虽然它在 Next.js 中用得最好，但它本身不绑定 Next.js。
+
+### 8.2.2. [代码解析]：分析 `src/lib/auth.ts` 的实现
+
+在我们的 SAAS 模板项目中，`src/lib/auth.ts` (或 `src/auth.ts`) 是认证系统的“心脏”。它取代了 Django 的 `settings.py` 中关于 AUTH 的所有配置。
+
+让我们来概念性地解析一下这个文件的结构：
+
+```typescript
+// src/lib/auth.ts
+import NextAuth from "next-auth";
+import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import Google from "next-auth/providers/google";
+// ... 其他 providers 如 GitHub ...
+
+import { db } from "@/db"; // 导入我们的 Drizzle 实例
+import { usersTable, accountsTable, sessionsTable } from "@/db/schema"; // 导入 Drizzle schema
+
+// 1. NextAuth() 是核心配置函数
+export const {
+  handlers, // 导出 API 路由处理器 (e.g., /api/auth/...)
+  auth,     // 导出会话获取函数 (在 RSC 和 Server Actions 中使用)
+  signIn,   // 导出登录函数
+  signOut,  // 导出登出函数
+} = NextAuth({
+
+  // 2. [核心] 适配器 (Adapter)
+  // 告诉 Auth.js 如何与我们的 Drizzle 数据库通信
+  adapter: DrizzleAdapter(db, {
+    usersTable,
+    accountsTable,
+    sessionsTable,
+    // ... 其他表 ...
+  }),
+
+  // 3. 认证提供者 (Providers)
+  // 配置我们支持的登录方式
+  providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+    // GitHub({...}),
+    // Resend({...}), // 魔法链接/邮箱登录
+  ],
+
+  // 4. 会话策略 (Session Strategy)
+  // 我们选择 "database" 策略，而不是 "jwt"
+  // 这更接近 Django 的会话模式，更安全，且易于服务端查询
+  session: {
+    strategy: "database",
+  },
+
+  // 5. 回调 (Callbacks)
+  // 这是定制化最关键的部分
+  callbacks: {
+    // [重要] 当会话被查询时
+    // 默认的 session 只包含 email/name/image
+    // 我们需要把 'id' 和 'credits' 注入到会话中
+    async session({ session, user }) {
+      if (session.user) {
+        session.user.id = user.id; // user.id 来自 Drizzle 适配器
+
+        // (概念) 从 user 对象中获取额外数据
+        // session.user.credits = user.credits;
+      }
+      return session;
+    },
+
+    // [重要] 当用户登录或注册时 (JWT 回调)
+    // 可以在这里处理新用户注册的逻辑，比如分配初始点数
+    async jwt({ token, user, trigger }) {
+      if (trigger === "signUp" && user) {
+        // (概念) 在新用户注册时，调用 Server Action 分配点数
+        // await assignInitialCredits(user.id);
+      }
+      return token;
+    },
+  },
+
+  // 6. (可选) 自定义登录页面
+  pages: {
+    signIn: "/login",
+    // error: "/auth-error",
+  },
+});
+```
+
+**关键点**：
+
+- **`DrizzleAdapter`** 是连接 `better-auth` 逻辑和 `Drizzle` 数据库的桥梁。
+- **`session`** **回调** 至关重要。我们必须通过它将 `user.id` 添加到 `session` 对象中，这样我们的 Server Components 和 Server Actions 才能通过 `auth()` 函数拿到当前登录用户的 ID。
+- **控制权**：我们完全控制了数据模型（Drizzle）和认证逻辑（Callbacks）。
+
+## 8.3. [Skill 实战]：探讨如何使用客户端 Cookie 安全管理会话
+
+这个 Skill (`nextjs-client-cookie-pattern/SKILL.md`) 探讨的是一个常见的 SAAS 场景：**用户在客户端有一些非敏感的偏好设置**，比如“是否折叠侧边栏”、“上次访问的项目 ID”或“选择的主题（暗色/亮色）”。
+
+**问题**：我们应该把这些状态存在哪里？
+
+1. **Zustand (客户端状态)**：可以，但用户刷新页面后就丢失了。
+2. **localStorage**：可以，但它在服务器端（RSC）无法访问。如果你希望服务器在渲染页面时就知道用户的偏好（例如正确渲染暗色模式），`localStorage` 做不到。
+3. **数据库**：可以，但为了“折叠侧边栏”这种小事去调用数据库（`await db.update(...)`），代价太高了。
+
+**最佳方案：客户端 Cookie**
+
+`better-auth` 使用安全的、HttpOnly 的 Cookie 来管理**会话（Session）**。但我们可以使用**非 HttpOnly** 的、客户端可读写的 Cookie 来管理**用户偏好**。
+
+**Skill 核心实践：**
+
+1. **使用** **`js-cookie`** **库**：这是一个在客户端读写 Cookie 的标准库。
+
+    ```typescript
+    // src/components/sidebar.tsx
+    "use client";
+    
+    import Cookies from "js-cookie";
+    import { useState, useEffect } from "react";
+    
+    export function Sidebar() {
+      // 1. 从 Cookie 初始化状态
+      const [isCollapsed, setIsCollapsed] = useState(() => {
+        const saved = Cookies.get("sidebar-collapsed");
+        return saved === "true";
+      });
+    
+      // 2. 当状态变化时，将其写入 Cookie
+      useEffect(() => {
+        Cookies.set("sidebar-collapsed", String(isCollapsed), { expires: 365 });
+      }, [isCollapsed]);
+    
+      const toggle = () => setIsCollapsed(prev => !prev);
+    
+      // ... JSX ...
+    }
+    ```
+
+2. **在 RSC 中读取偏好**：
+Next.js 提供了 `cookies()` 函数（来自 `next/headers`），它允许 Server Components **读取**浏览器发送的 Cookie。
+
+    ```typescript
+    // src/app/[locale]/layout.tsx (Server Component)
+    import { cookies } from "next/headers";
+    import { Sidebar } from "@/components/sidebar";
+    
+    export default function AppLayout({ children }) {
+      // 3. 在服务器上读取 Cookie！
+      const cookieStore = cookies();
+      const initialCollapsed = cookieStore.get("sidebar-collapsed")?.value === "true";
+    
+      return (
+        <div className="flex">
+          {/* 4. 将服务器读取的值传递给客户端组件 */}
+          {/* 这避免了客户端-服务器状态不匹配导致的水合作用错误 (hydration error) */}
+          <Sidebar initialCollapsed={initialCollapsed} />
+          <main>{children}</main>
+        </div>
+      );
+    }
+    ```
+
+    (客户端组件 `Sidebar` 需要相应修改以接收 `initialCollapsed` prop)
+
+**结论**：
+这个模式非常强大。它利用 Cookie 作为桥梁，实现了：
+
+- 客户端的快速读写和持久化（`js-cookie`）。
+- 服务器端（RSC）的访问能力（`next/headers`）。
+- 避免了不必要的数据库请求。
+
+这与我们选择 `better-auth` 的“数据库会话”策略（用于安全）和“客户端 Cookie”（用于偏好）相辅相成，构成了 SAAS 应用中一个健壮、高性能的会话管理模式。
+
+

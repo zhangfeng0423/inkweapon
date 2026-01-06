@@ -2,7 +2,7 @@ import BlogGridWithPagination from '@/components/blog/blog-grid-with-pagination'
 import { websiteConfig } from '@/config/website';
 import { LOCALES } from '@/i18n/routing';
 import { constructMetadata } from '@/lib/metadata';
-import { blogSource, categorySource } from '@/lib/source';
+import { blogSource, categorySource, sortBlogPosts } from '@/lib/source';
 import { getUrlWithLocale } from '@/lib/urls/urls';
 import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
@@ -60,9 +60,7 @@ export default async function BlogCategoryPage({
   const filteredPosts = publishedPosts.filter((post) =>
     post.data.categories.some((cat) => cat === category.slugs[0])
   );
-  const sortedPosts = filteredPosts.sort((a, b) => {
-    return new Date(b.data.date).getTime() - new Date(a.data.date).getTime();
-  });
+  const sortedPosts = sortBlogPosts(filteredPosts);
   const currentPage = 1;
   const blogPageSize = websiteConfig.blog.paginationSize;
   const paginatedLocalePosts = sortedPosts.slice(

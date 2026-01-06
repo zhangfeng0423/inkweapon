@@ -88,3 +88,36 @@ export type PagesType = InferPageType<typeof pagesSource>;
 export type AuthorType = InferPageType<typeof authorSource>;
 export type CategoryType = InferPageType<typeof categorySource>;
 export type BlogType = InferPageType<typeof blogSource>;
+
+/**
+ * 从 slug 中提取 chapter 数字
+ * chapter1 -> 1, chapter10 -> 10, others -> 0
+ */
+export function extractChapterNumber(slug: string): number {
+  const match = slug.match(/chapter(\d+)/i);
+  return match ? Number.parseInt(match[1], 10) : 0;
+}
+
+/**
+ * 博客文章排序：优先按 chapter 数字升序，非 chapter 文章按日期降序
+ */
+export function sortBlogPosts(posts: BlogType[]): BlogType[] {
+  return posts.sort((a, b) => {
+    const aChapter = extractChapterNumber(a.slugs[0] || '');
+    const bChapter = extractChapterNumber(b.slugs[0] || '');
+
+    // 两者都是 chapter 文章，按数字升序
+    if (aChapter > 0 && bChapter > 0) {
+      return aChapter - bChapter;
+    }
+
+    // 只有 a 是 chapter，a 排在前面
+    if (aChapter > 0) return -1;
+
+    // 只有 b 是 chapter，b 排在前面
+    if (bChapter > 0) return 1;
+
+    // 都不是 chapter 文章，按日期降序
+    return new Date(b.data.date).getTime() - new Date(a.data.date).getTime();
+  });
+}

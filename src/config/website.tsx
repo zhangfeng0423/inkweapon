@@ -70,7 +70,7 @@ export const websiteConfig: WebsiteConfig = {
   },
   blog: {
     enable: true,
-    paginationSize: 6,
+    paginationSize: 24,
     relatedPostsSize: 3,
   },
   docs: {
