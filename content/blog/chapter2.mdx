@@ -1,6 +1,6 @@
 ---
-title: "第 2 章：TypeScript：SAAS 项目的 \"架构契约\" (vs. Mypy)"
-description: "在第一章中，我们了解了 Node.js 异步的““哲学””。现在，我们来谈谈 JavaScript 生态的““安全带””：TypeScript (TS)。"
+title: "Chapter 2: TypeScript - The Architectural Contract for SaaS Projects (vs. Mypy)"
+description: "In Chapter 1, we explored Node.js's asynchronous philosophy. Now, let's talk about JavaScript's safety belt: TypeScript (TS)."
 date: "2026-01-06"
 published: true
 categories: ["javascript", "typescript", "python"]
@@ -9,150 +9,147 @@ image: "/images/blog/post-1.png"
 ---
 
 
-## 第 2 章：TypeScript：SAAS 项目的 "架构契约" (vs. Mypy)
+## Chapter 2: TypeScript - The Architectural Contract for SaaS Projects (vs. Mypy)
 
-在第一章中，我们了解了 Node.js 异步的““哲学””。现在，我们来谈谈 JavaScript 生态的““安全带””：**TypeScript (TS)**。
+In Chapter 1, we explored Node.js's asynchronous philosophy. Now, let's talk about JavaScript ecosystem's **safety belt**: **TypeScript (TS)**.
 
-作为 Python 开发者，你可能热爱 Python 的动态特性，但也可能在大型项目中怀念类型提示，并借助 `Mypy` 来进行静态检查。
+As a Python developer, you might love Python's dynamic nature but also miss type hints in large projects, relying on `Mypy` for static checking.
 
-**JavaScript 本身是 100% 动态类型的。** 对于一个需要长期维护、多人协作的企业级 SAAS 项目来说，这无异于一场灾难。TypeScript 不是一个““可选项””，它是项目的““架构契约””(Architectural Contract)。它定义了数据在数据库 (Drizzle)、后端 (Server Actions) 和前端 (React) 之间流动的 **形态规范**。
-
----
-
-### 2.1. 为什么 TS 是大型 SAAS 的必需品
-
-你可能会想：““Python 也有 Mypy，TS 有什么不同？””
-
-这是一个根本性的区别：
-
-- **Mypy 是一个““检查器””。** 你在 _写完_ Python 代码后，_运行_ `mypy` 来检查错误。如果 Mypy 报错，你的 Python 代码 _依然可以运行_（尽管可能会在运行时崩溃）。
-- **TypeScript 是一个““编译器””。** 你编写的是 `.ts` 文件，然后 TypeScript 编译器 (TSC) 会将它 **转换** 为浏览器或 Node.js 可以理解的 `.js` 文件。如果类型不匹配，**代码根本无法通过编译**。
-
-对于我们的 SAAS 项目，TS 提供了四大核心价值：
-
-1. **无与伦比的““自动补全”” (IntelliSense)：** 当你在 VS Code 中输入 `user.` 时，IDE 会立刻告诉你这个 `user` 对象拥有 `id`, `email`, `credits` 还是 `subscriptionId`。你无需再去 `src/db/` 目录查看 Drizzle 的 schema 定义。
-2. **安全的重构：** 假设你需要将 `user.credits` 字段重命名为 `user.creditBalance`。在纯 JS 项目中，这是一场噩梦，你需要全局搜索并祈祷没有遗漏。在 TS 项目中，你只需要在 `src/db/` 的 schema 中重命名该字段，**编译器会立刻在项目的每一个角落（Actions、API、前端页面）中标红所有出错的地方**。
-3. **清晰的““数据契约””：** 我们的 `src/actions/` 目录中有一个函数 `updateUserSettings`。TS 会强制你清晰地定义它接受什么参数（`userId: string`, `settings: UserSettings`），返回什么（`Promise<void>`）。
-4. **消除整个类别的 Bug：** 你再也不会遇到 `TypeError: undefined is not a function` 这种在 JS 中最常见的运行时错误，因为编译器在构建时就已经抓住了它们。
-
-TS 的所有魔力都由根目录下的 `tsconfig.json` 文件控制。对于 SAAS 项目，**`"strict": true`** 是我们的‘强制安全标准’。它开启了所有最严格的类型检查（如 `strictNullChecks`），确保你不会意外地处理一个 `null` 或 `undefined` 值，这是 Python 开发者（习惯了 `None`）必须适应的关键点。
+**JavaScript itself is 100% dynamically typed.** For an enterprise-level SaaS project requiring long-term maintenance and multi-person collaboration, this is a disaster. TypeScript isn't an "option" - it's the project's **"Architectural Contract"**. It defines the **shape specification** of data flowing between the database (Drizzle), backend (Server Actions), and frontend (React).
 
 ---
 
-### 2.2. 核心类型：interface 与 type
+### 2.1. Why TS is Essential for Large SaaS Projects
 
-在 Python 中，你可能使用 `TypedDict` 或 dataclass 来定义数据结构。在 TS 中，最常见的两种方式是 `interface` 和 `type`。
+You might think: "Python has Mypy too, what's different?"
 
-这常常让初学者感到困惑，我们来快速厘清它们：
+This is a fundamental difference:
 
-### `interface` (接口)
+- **Mypy is a "checker".** You write Python code first, then run `mypy` to check for errors. If Mypy reports errors, your Python code can still run (though it might crash at runtime).
+- **TypeScript is a "compiler".** You write `.ts` files, and the TypeScript compiler (TSC) transforms them into `.js` files that browsers or Node.js can understand. If types don't match, **the code simply won't compile**.
 
-- **用途：** 专注于定义 **对象的形态 (shape)**。
-- **特点：** 可以““声明合并””(Declaration Merging)。
+For our SaaS project, TS provides four core values:
+
+1. **Unparalleled "IntelliSense":** When you type `user.` in VS Code, the IDE immediately tells you whether this `user` object has `id`, `email`, `credits`, or `subscriptionId`. You no longer need to check the Drizzle schema definition in the `src/db/` directory.
+2. **Safe refactoring:** Suppose you need to rename the `user.credits` field to `user.creditBalance`. In a pure JS project, this is a nightmare - you need to search globally and pray you didn't miss anything. In a TS project, you only rename the field in the `src/db/` schema, and **the compiler immediately marks every error throughout the project** (in Actions, APIs, frontend pages).
+3. **Clear "data contracts":** Our `src/actions/` directory has a function `updateUserSettings`. TS forces you to clearly define what parameters it accepts (`userId: string`, `settings: UserSettings`) and what it returns (`Promise<void>`).
+4. **Eliminates entire categories of bugs:** You'll never encounter `TypeError: undefined is not a function` - the most common runtime error in JS - because the compiler catches them at build time.
+
+All of TS's magic is controlled by the `tsconfig.json` file in the root directory. For SaaS projects, **`"strict": true`** is our mandatory safety standard. It enables all strictest type checks (like `strictNullChecks`), ensuring you don't accidentally handle a `null` or `undefined` value - a key point Python developers (accustomed to `None`) must adapt to.
+
+---
+
+### 2.2. Core Types: interface vs type
+
+In Python, you might use `TypedDict` or dataclass to define data structures. In TS, the two most common approaches are `interface` and `type`.
+
+This often confuses beginners, so let's clarify:
+
+### `interface` (Interface)
+
+- **Purpose:** Focuses on defining the **shape of objects**.
+- **Feature:** Supports "declaration merging".
 
 ```typescript
-// 专门用于描述一个对象应该长什么样
+// Specifically for describing what an object should look like
 interface User {
   id: string;
   email: string;
 }
 
-// 假设在另一个文件中，你可以““扩展””这个接口
-// 这在为第三方库（如 Better Auth）打补丁时很有用
+// In another file, you can "extend" this interface
+// This is useful for patching third-party libraries (like Better Auth)
 interface User {
-  credits: number; 
+  credits: number;
 }
 
-// 现在的 User 接口同时拥有 id, email, 和 credits
+// Now User interface has id, email, and credits
 ```
 
-### `type` (类型别名)
+### `type` (Type Alias)
 
-- **用途：** 更为灵活，可以为 **任何类型** 创建一个““别名””。
-- **特点：** 不能声明合并，但功能更全。
+- **Purpose:** More flexible, can create an "alias" for **any type**.
+- **Feature:** Cannot declaration merge, but more comprehensive functionality.
 
 ```typescript
-// 1. 描述对象 (和 interface 一样)
+// 1. Describe objects (same as interface)
 type User = {
   id: string;
   email: string;
 };
 
-// 2. 描述联合类型 (Union Types)
-// 这是 interface 做不到的
+// 2. Describe union types
+// This is something interface cannot do
 type PaymentStatus = "pending" | "paid" | "failed";
 
-// 3. 描述一个函数签名
+// 3. Describe a function signature
 type EmailSender = (to: string, body: string) => Promise<boolean>;
 
-// 4. 组合类型 (Intersection & Union)
-type UserWithPlan = User & { plan: PaymentPlan }; // 组合
+// 4. Combine types (Intersection & Union)
+type UserWithPlan = User & { plan: PaymentPlan }; // Combine
 ```
 
-为什么不用 enum？
-Python 开发者可能习惯了 Enum。TypeScript 也有 enum，但现代 TS 实践（尤其在 Next.js 项目中）更倾向于使用 字面量联合类型 (String Literal Unions) (如 PaymentStatus 所示)。
+Why not use enum?
+Python developers might be used to Enum. TypeScript also has enum, but modern TS practices (especially in Next.js projects) prefer string literal unions (as shown in PaymentStatus).
 
-    - **原因：** 联合类型更简洁，零运行时开销（`enum` 会被编译成一个 JS 对象），并且在调试时更直观（你看到的是 `"pending"` 而不是 `PaymentStatus.PENDING` 对应的数字 `0`）。
+- **Reason:** Union types are simpler, have zero runtime overhead (`enum` compiles to a JS object), and are more intuitive when debugging (you see `"pending"` instead of the number `0` corresponding to `PaymentStatus.PENDING`).
 
-**在我们的 SAAS 项目中如何选择？**
+**How to choose in our SaaS project?**
 
-- **黄金法则：** **优先使用** **`type`**。
-- **原因：** `type` 更具一致性和灵活性。它能做 `interface` 能做的所有事（描述对象），还能做 `interface` 做不到的事（如联合类型）。这可以减少你““到底该用哪个？””的思考负担。
-- **例外：** 只有当你需要利用““声明合并””来扩展一个已存在的第三方类型时 (比如 2.5 节的 `auth.ts` 示例)，才使用 `interface`。
+- **Golden Rule:** **Prefer `type`**.
+- **Reason:** `type` is more consistent and flexible. It can do everything `interface` can do (describe objects) and more (like union types). This reduces your cognitive load of "which one should I use?".
+- **Exception:** Only use `interface` when you need to leverage "declaration merging" to extend an existing third-party type (like the `auth.ts` example in section 2.5).
 
 ---
 
-### 2.3. Zod：运行时的数据“防火墙” (vs. Pydantic)
+### 2.3. Zod: Runtime Data Firewall (vs. Pydantic)
 
-这是本章 **最关键** 的概念，也是从 Python `Pydantic` 过渡来的开发者最容易混淆的地方。
+This is the **most critical** concept of this chapter, and the most confusing part for developers transitioning from Python's `Pydantic`.
 
-**TypeScript 的局限性：只存在于““编译时””。**
+**TypeScript's limitation: only exists at "compile time".**
 
-当你的 Next.js 应用被编译成 JavaScript _并运行_ 在服务器上时，**所有的 TS 类型信息都被抹除了**。
+When your Next.js app is compiled to JavaScript and **runs** on the server, **all TS type information is erased**.
 
-如果此时，一个外部请求（例如用户提交的表单，或 `src/payment/` 接收到的 Stripe Webhook）发送了一段 JSON 数据给你的 `src/actions/`，会发生什么？
-
-TypeScript
+If at this point, an external request (e.g., user-submitted form, or Stripe Webhook received by `src/payment/`) sends JSON data to your `src/actions/`, what happens?
 
 ```typescript
-// 一个 Server Action
+// A Server Action
 export async function updateUser(formData: FormData) {
   'use server';
-  
-  // 你““欺骗””了 TS 编译器，告诉它这就是 User 类型
-  // 但 formData 可能是恶意的或不完整的
-  const data = Object.fromEntries(formData) as User; 
 
-  // TS 在这里不会报错，但 data.email 可能是 undefined
-  // 这将在运行时导致数据库崩溃
+  // You "tricked" the TS compiler, telling it this is User type
+  // But formData might be malicious or incomplete
+  const data = Object.fromEntries(formData) as User;
+
+  // TS won't error here, but data.email might be undefined
+  // This will cause a database crash at runtime
   await db.update(users).set({ email: data.email.toLowerCase() });
 }
 ```
 
-**你所熟悉的：Pydantic**
-在 Python/FastAPI 中，你会用 Pydantic。Pydantic 会在 **运行时** 检查传入的 `dict`，如果 `email` 字段缺失或类型错误，它会立刻抛出一个 `ValidationError`。
+**What you're familiar with: Pydantic**
+In Python/FastAPI, you'd use Pydantic. Pydantic checks the incoming `dict` at **runtime**, and if the `email` field is missing or has the wrong type, it immediately throws a `ValidationError`.
 
-**你需要掌握的：ZodZod 就是 TypeScript 世界的 Pydantic**。它是一个在““运行时””验证数据形态的““防火墙””。
+**What you need to master: Zod**
+Zod is the Pydantic of the TypeScript world. It's a "firewall" for validating data shape at **runtime**.
 
-它最强大的地方在于 **““单一事实来源””(Single Source of Truth)**：你用 Zod 定义一个 Schema，然后 **Zod 会自动为你推导出 TypeScript 类型**。
-
-TypeScript
+Its most powerful feature is **"Single Source of Truth"**: you define a Schema with Zod, then **Zod automatically infers TypeScript types** for you.
 
 ```typescript
 import { z } from 'zod';
 
-// 1. 定义““运行时””的 Schema
+// 1. Define "runtime" Schema
 export const UpdateUserSchema = z.object({
-  // Zod 提供了丰富的验证器
-  email: z.string().email("无效的邮箱地址"),
-  name: z.string().min(2, "名称至少需要2个字符"),
+  // Zod provides rich validators
+  email: z.string().email("Invalid email address"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
 });
 
-// 2. 从 Schema ““推导””出““编译时””的 TS 类型
+// 2. Infer "compile-time" TS type from Schema
 export type UpdateUserPayload = z.infer<typeof UpdateUserSchema>;
 
 /*
-`UpdateUserPayload` 类型现在等同于：
+`UpdateUserPayload` type now equals:
 type UpdateUserPayload = {
   email: string;
   name: string;
@@ -160,169 +157,161 @@ type UpdateUserPayload = {
 */
 ```
 
-**在我们的 SAAS 项目中应用 Zod：**
+**Applying Zod in our SaaS project:**
 
-现在，我们重构那个不安全的 Server Action：
-
-TypeScript
+Now, let's refactor that unsafe Server Action:
 
 ```javascript
-import { UpdateUserSchema } from '@/lib/schemas'; // 假设我们把 Schema 放在这里
+import { UpdateUserSchema } from '@/lib/schemas'; // Assume we put Schema here
 
 export async function updateUser(formData: FormData) {
   'use server';
 
   const rawData = Object.fromEntries(formData);
-  
-  // 3. 在““运行时””进行解析和验证
+
+  // 3. Parse and validate at "runtime"
   const validationResult = UpdateUserSchema.safeParse(rawData);
-  
+
   if (!validationResult.success) {
-    // 验证失败，安全地返回错误
+    // Validation failed, safely return error
     return { error: validationResult.error.flatten().fieldErrors };
   }
 
-  // 4. 只有““通过防火墙””的数据才能进入你的业务逻辑
-  // `data` 现在 100% 类型安全
-  const data = validationResult.data; 
+  // 4. Only data that "passed the firewall" enters your business logic
+  // `data` is now 100% type-safe
+  const data = validationResult.data;
 
-  await db.update(users).set({ 
-    email: data.email.toLowerCase(), 
+  await db.update(users).set({
+    email: data.email.toLowerCase(),
     name: data.name,
   });
 }
 ```
 
-**总结：** **TypeScript** 保证了你 _内部代码_ 之间的契约。**Zod** 保证了你的应用与 _外部世界_ (用户输入, API, Webhook) 之间的契约。
+**Summary:** **TypeScript** guarantees the contract between your **internal code**. **Zod** guarantees the contract between your application and the **external world** (user input, APIs, Webhooks).
 
-这完美呼应了 1.4 节的算法思维：Zod 解析你的 schema 的过程，本质上就是在 **遍历一棵数据““树””(Tree)**，它会递归地检查每一个节点和叶子（`email`, `name`），以确保它们都符合你在 schema 中定义的““契约””。
+This perfectly echoes the algorithmic thinking in section 1.4: Zod's process of parsing your schema is essentially **traversing a data "tree"**, recursively checking every node and leaf (`email`, `name`) to ensure they comply with the "contract" you defined in the schema.
 
 ---
 
-### 2.4. TS 进阶：工具类型 (Utility Types) 与泛型 (Generics)
+### 2.4. TS Advanced: Utility Types & Generics
 
-如果说 `interface` 和 `type` 是让你““制造零件””，那么工具类型 (Utility Types) 和泛型 (Generics) 就是让你““组装可复用的高级模块””。SAAS 项目中充斥着对现有类型进行““微调””的需求。
+If `interface` and `type` are for "making parts", then Utility Types and Generics are for "assembling reusable advanced modules". SaaS projects are full of needs to "fine-tune" existing types.
 
-### 2.4.1 工具类型：类型的““增删改查””
+### 2.4.1 Utility Types: CRUD for Types
 
-- **`Partial<T>`** **(改):**
-    - **SAAS 场景：** 想象一个““用户设置””更新表单。用户可能只修改了 `name`，而没有修改 `email`。`src/actions/` 中的 `updateUser` 函数不应该要求一个完整的 `User` 对象。
-    - **契约：** 这个 Action 的 `payload` 类型就应该是 `Partial<User>`，表示 `User` 上的 _所有_ 字段都变为可选。
-- **`Pick<T, K>`** **(查) /** **`Omit<T, K>`** **(删):**
-    - **SAAS 场景：** 你的 Drizzle `User` 类型（来自 `src/types/db.ts`）包含了 `id`, `email`, `hashedPassword`, `createdAt`。
-    - **契约 (Pick)：** 当你创建一个““公开的用户资料””类型时，你可能只需要 `id` 和 `name`。`type PublicUser = Pick<User, 'id' | 'name'>;`
-    - **契约 (Omit)：** 当你创建一个 `createUser` 函数时，你需要 _除了_ `id` 和 `createdAt`（这些由数据库生成）之外的所有字段。`type CreateUserPayload = Omit<User, 'id' | 'createdAt' | 'hashedPassword'>;`
+- **`Partial<T>` (Update):**
+  - **SaaS scenario:** Imagine a "user settings" update form. The user might only modify `name`, not `email`. The `updateUser` function in `src/actions/` shouldn't require a complete `User` object.
+  - **Contract:** This Action's `payload` type should be `Partial<User>`, indicating that _all_ fields on `User` become optional.
 
-### 2.4.2 泛型 (`<T>`)：创建可复用的““类型函数””
+- **`Pick<T, K>` (Read) / `Omit<T, K>` (Delete):**
+  - **SaaS scenario:** Your Drizzle `User` type (from `src/types/db.ts`) includes `id`, `email`, `hashedPassword`, `createdAt`.
+  - **Contract (Pick):** When creating a "public user profile" type, you might only need `id` and `name`. `type PublicUser = Pick<User, 'id' | 'name'>;`
+  - **Contract (Omit):** When creating a `createUser` function, you need all fields _except_ `id` and `createdAt` (which are generated by the database). `type CreateUserPayload = Omit<User, 'id' | 'createdAt' | 'hashedPassword'>;`
 
-- **Python 类比：** 这非常类似于 Python `typing` 模块中的 `TypeVar` 和 `Generic`。
-- **SAAS 场景：** 在 `src/actions/` 中，我们希望所有 Server Action 都返回一个标准化的响应对象，以便前端统一处理。
-- **契约:** TypeScript
+### 2.4.2 Generics (`<T>`): Creating Reusable "Type Functions"
+
+- **Python analogy:** Very similar to `TypeVar` and `Generic` in Python's `typing` module.
+- **SaaS scenario:** In `src/actions/`, we want all Server Actions to return a standardized response object for unified frontend handling.
+- **Contract:**
 
 ```typescript
+// Define a "generic" response type
+// T can be User, Subscription, or null
+export type ActionResponse<T> = {
+  success: boolean;
+  data: T | null;
+  error: string | null;
+}
 
-    ```javascript
-    // 定义一个““泛型””响应类型
-    // T 可以是 User, Subscription, 或是 null
-    export type ActionResponse<T> = {
-      success: boolean;
-      data: T | null;
-      error: string | null;
+// Use in Action
+import { User } from '@/types';
+
+async function getUser(id: string): Promise<ActionResponse<User>> {
+  'use server';
+  try {
+    const user = await db.query.users.findFirst({ where: eq(users.id, id) });
+    if (!user) {
+      return { success: false, data: null, error: "User not found" };
     }
-    
-    // 在 Action 中使用
-    import { User } from '@/types';
-    
-    async function getUser(id: string): Promise<ActionResponse<User>> {
-      'use server';
-      try {
-        const user = await db.query.users.findFirst({ where: eq(users.id, id) });
-        if (!user) {
-          return { success: false, data: null, error: "User not found" };
-        }
-        // Omit 掉敏感数据，呼应 2.4.1
-        const publicUser = { id: user.id, email: user.email }; // 假设
-    
-        // 注意看 data 的类型是 User (或其子集)
-        return { success: true, data: publicUser, error: null };
-      } catch (e) {
-        return { success: false, data: null, error: "Database error" };
-      }
-    }
-    ```
+    // Omit sensitive data, echoing 2.4.1
+    const publicUser = { id: user.id, email: user.email }; // Assume
+
+    // Note the data type is User (or subset thereof)
+    return { success: true, data: publicUser, error: null };
+  } catch (e) {
+    return { success: false, data: null, error: "Database error" };
+  }
+}
+```
 
 ---
 
-### 2.5. [代码解析]：分析实战项目中的 src/types/ 目录
+### 2.5. [Code Analysis]: Analyzing src/types/ Directory in Real Project
 
-(原 2.4 节)
+In our SaaS project, the `src/types/` directory isn't a "dumping ground" - it's the central hub of our "architectural contracts". While many types live alongside their logic (like Zod Schemas), `src/types/` focuses on storing widely shared core data models.
 
-在我们的 SAAS 项目中，`src/types/` 目录不是一个““垃圾场””，而是我们““架构契约””的中心枢纽。虽然很多类型会和它们的逻辑（如 Zod Schemas）放在一起，但 `src/types/` 专注于存放那些被广泛共享的核心数据模型。
-
-打开这个目录，我们可能会看到：
+Opening this directory, we might see:
 
 - `src/types/db.ts`
 
-    这是 Drizzle ORM 的核心。Drizzle 有一个强大的功能：它可以 根据你的数据库 Schema (在 src/db/schema.ts 中定义) 自动推导出 TS 类型。
-    这个文件会包含类似这样的代码：
+  This is Drizzle ORM's core. Drizzle has a powerful feature: it can automatically infer TS types from your database Schema (defined in src/db/schema.ts).
+  This file contains code like:
 
-    ```javascript
-    // 从数据库“select”时，一个 User 会是什么样子
-    export type User = typeof usersTable.$inferSelect;
-    // “insert”一个 User 时，需要哪些字段
-    export type NewUser = typeof usersTable.$inferInsert;
-    export type Subscription = typeof subscriptionsTable.$inferSelect;
-    ```
+  ```javascript
+  // What a User looks like when "select" from database
+  export type User = typeof usersTable.$inferSelect;
+  // What fields are needed when "insert" a User
+  export type NewUser = typeof usersTable.$inferInsert;
+  export type Subscription = typeof subscriptionsTable.$inferSelect;
+  ```
 
-    价值： 你的数据库和 TS 类型 永远 同步。
+  Value: Your database and TS types are **always** in sync.
 
 - `src/types/index.ts`
 
-    一个主出口文件，它会重新导出所有其他类型，方便在项目中统一导入。
+  A main export file that re-exports all other types for convenient unified importing in the project.
 
-    TypeScript
+  ```typescript
+  export * from './db';
+  export * from './auth';
+  export * from './stripe';
+  ```
 
-        ```typescript
-        export * from './db';
-        export * from './auth';
-        export * from './stripe';
-        ```
+  Usage: `import { User, Subscription } from '@/types';`
 
-    使用： import { User, Subscription } from '@/types';
+- `src/types/auth.ts`
 
-- `srcD/types/auth.ts`
+  We use Better Auth. Better Auth's auth() function returns a session object. But we might want to add custom data to this session (like user's credits or plan).
+  This file uses interface's "declaration merging" feature (the exception mentioned in section 2.2) to extend Better Auth's default types:
 
-    我们使用了 Better Auth。Better Auth 的 auth() 函数会返回一个 session 对象。但我们可能想往这个 session 里添加自定义数据（比如用户的 credits 或 plan）。
-    这个文件会使用 interface 的““声明合并””功能（2.2 节中提到的例外情况）来扩展 Better Auth 的默认类型：
-
-    ```typescript
-    import 'better-auth'; // 导入原始模块
-    declare module 'better-auth' {
-    // 扩展默认的 Session 和 User 类型
-    interface Session {
-      user: User & {
-        id: string;
-        credits: number;
-        plan: 'free' | 'pro';
-    	  }
-    	}
+  ```typescript
+  import 'better-auth'; // Import original module
+  declare module 'better-auth' {
+  // Extend default Session and User types
+  interface Session {
+    user: User & {
+      id: string;
+      credits: number;
+      plan: 'free' | 'pro';
     }
-    ```
+  }
+  }
+  ```
 
-    价值： 现在，当你在项目任何地方调用 auth()，TS 都会知道 session.user 上有 credits 和 plan。
+  Value: Now, when you call auth() anywhere in the project, TS knows that session.user has credits and plan.
 
 - `src/types/stripe.ts`
 
-    专门用于 src/payment/ 目录的类型。Stripe 官方的类型非常庞大复杂。我们在这里定义 我们自己 应用所关心的简化版““契约””。
+  Specifically for types in the src/payment/ directory. Stripe's official types are massive and complex. We define our own simplified "contracts" that our application cares about.
 
-    ```typescript
-    export type AppSubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'unpaid';
-    export type CreditTransaction = {
-      id: string;
-      amount: number;
-      type: 'purchase' | 'usage'; // 再次使用联合类型
-      createdAt: Date;
-    }
-    ```
-
+  ```typescript
+  export type AppSubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'unpaid';
+  export type CreditTransaction = {
+    id: string;
+    amount: number;
+    type: 'purchase' | 'usage'; // Using union type again
+    createdAt: Date;
+  }
+  ```
 

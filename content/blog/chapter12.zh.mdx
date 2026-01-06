@@ -1,0 +1,407 @@
+---
+title: "第 12 章：SAAS 定价：积分与计量系统"
+description: "在第 11 章中，我们成功地集成了 Stripe Checkout 和 Webhooks，为我们的 SAAS 奠定了“订阅”基础。用户现在可以为“Pro”计划付费了。然而，一个现代 SAAS，尤其是 AI SAAS，仅仅区分“免费”和“付费”是远远不够的。"
+date: "2026-01-06"
+published: true
+categories: ["typescript", "python", "react"]
+author: "notion-import"
+image: "/images/blog/post-1.png"
+---
+
+
+# 第 12 章：SAAS 定价：积分与计量系统
+
+在第 11 章中，我们成功地集成了 Stripe Checkout 和 Webhooks，为我们的 SAAS 奠定了“订阅”基础。用户现在可以为“Pro”计划付费了。然而，一个现代 SAAS，尤其是 AI SAAS，仅仅区分“免费”和“付费”是远远不够的。
+
+思考一个问题：你的“Pro”用户每月支付 20 美元。如果一个用户本月调用了 10,000 次 AI API，而另一个用户只调用了 10 次，他们支付相同的费用，这样公平吗？你的成本模型能承受吗？
+
+这就是**计量(Metering)**和**积分(Credits)**系统登场的舞台。本章，我们将探讨如何从“固定订阅”架构升级到“订阅+计量”的混合架构，这将为你的 SAAS 提供无与伦比的灵活性和可扩展性。
+
+## 12.1. 架构：为何需要积分系统？(解耦与灵活性)
+
+对于许多 Python 开发者来说，计量系统可能意味着复杂的 Celery 任务、Redis 计数器和定期的-核对脚本。在 Next.js 架构中，我们可以利用 Drizzle 的原子性操作和 Server Actions 来构建一个更简洁、实时的系统。
+
+引入“积分”层（一个虚拟货币）有四大架构优势：
+
+1. **解耦功能与定价**：
+    - **没有积分系统**：当市场营销团队想改变 AI 调用的价格时，你（工程师）需要修改代码中_所有_的 `if (user.plan === 'pro')` 检查，并硬编码新的限制。
+    - **有了积分系统**：你只需要调整“调用一次 AI”消耗的积分数（例如从 1 积分改为 2 积分）。你的功能代码（`consumeCredits(userId, 2)`）保持不变。
+2. **灵活的商业模式**：
+    - **订阅 (Subscription)**：Pro 订阅每月自动“充值”1000 积分。
+    - **一次性购买 (One-Time Purchase)**：用户可以额外购买 500 积分的“加油包”(Top-up)。
+    - **终身版 (Lifetime Deal - LTD)**：一次性支付 200 美元，获得 100,000 积分（或每月 5000 积分）。
+    - **免费试用 (Free Trial)**：新用户注册即送 50 积分。
+3. **精细化计量 (Metering)**：
+    - 不同的功能可以消耗不同数量的积分。
+    - `generateImage()` (调用 DALL-E 3)：消耗 10 积分。
+    - `summarizeText()` (调用 GPT-4o)：消耗 2 积分。
+    - `simpleApiLookup()`：消耗 0.1 积分。
+4. **清晰的价值传递**：
+    - 用户可以清楚地看到他们的“弹药”还剩多少。这比一个模糊的“Pro 计划”限制要清晰得多，极大地提升了透明度和用户体验。
+
+我们的 SAAS 模板将实现一个基于 Drizzle 的积分系统，它与第 11 章的 Stripe 订阅紧密集成。
+
+## 12.2. [代码解析]：分析 src/credits/ 目录
+
+`src/credits/` 目录存放着积分计量系统的核心逻辑。它与 `src/db/` 和 `src/actions/` 紧密协作。
+
+### 文件 1：`src/db/schema.ts` (扩展)
+
+首先，我们需要在数据库中跟踪积分。我们不会只在 `users` 表上放一个 `credits` 字段，因为这难以跟踪积分的来源和有效期。我们将创建一个独立的 `credits` 表。
+
+```typescript
+// src/db/schema.ts
+// ... 导入和 'users', 'subscriptions' 表 ...
+
+import { sql } from 'drizzle-orm';
+
+// ... users 表 ...
+export const users = pgTable('users', {
+  id: text('id').primaryKey(),
+  // ... 其他字段 ...
+  stripeCustomerId: text('stripe_customer_id'),
+  subscriptionStatus: text('subscription_status'),
+
+  // 我们在 user 表上保留一个“总积分”字段，用于快速读取
+  // 这是一个“冗余”字段，通过触发器或 Server Action 来保持同步
+  totalCredits: integer('total_credits').default(0).notNull(),
+});
+
+// 积分明细表：跟踪每一次积分的增减
+export const creditTransactions = pgTable('credit_transactions', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  amount: integer('amount').notNull(), // 正数表示增加, 负数表示消耗
+  description: text('description'), // e.g., "Monthly Pro Plan", "Consumed: AI Summary"
+  expiresAt: timestamp('expires_at'), // NULL 表示永不过期
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+```
+
+- **架构决策**：我们使用了一个 `creditTransactions` 表（流水表）而不是一个单一的 `credits` 表。这是更健壮的“事件溯源” (Event Sourcing) 模式。`users.totalCredits` 字段是通过计算这个表（或更优化的方式）得来的。为了简单起见，我们的 action 将同时更新这两个地方。
+
+### 文件 2：`src/actions/credit.actions.ts`
+
+这是积分系统的“发动机”。这里的所有函数都是 Server Actions，确保它们只在服务器上安全执行。
+
+```typescript
+'use server';
+
+import { db } from '@/db';
+import { users, creditTransactions }6 from '@/db/schema';
+import { auth } from '@/lib/auth';
+import { eq, sql, and, gt, sum } from 'drizzle-orm';
+
+// 核心功能：消耗积分
+// 这是一个关键的“原子性”操作
+export async function consumeCredits(userId: string, amountToConsume: number, description: string) {
+  // 注意：amountToConsume 应该是正数，例如 2
+  if (amountToConsume <= 0) {
+    return { error: 'Invalid amount' };
+  }
+
+  // 使用 Drizzle 事务来确保原子性
+  try {
+    const result = await db.transaction(async (tx) => {
+      // 1. 获取当前用户
+      const user = await tx.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: { totalCredits: true },
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // 2. 检查是否有足够的积分
+      if (user.totalCredits < amountToConsume) {
+        return { error: 'Insufficient credits' };
+      }
+
+      // 3. 更新 users 表中的总积分
+      // 使用 sql`...` 来执行原子更新, 防止竞态条件
+      await tx.update(users)
+        .set({ totalCredits: sql`${users.totalCredits} - ${amountToConsume}` })
+        .where(eq(users.id, userId));
+
+      // 4. 插入一条消耗流水
+      await tx.insert(creditTransactions).values({
+        userId: userId,
+        amount: -amountToConsume, // 消耗，所以是负数
+        description: description,
+      });
+
+      return { success: true, newTotal: user.totalCredits - amountToConsume };
+    });
+
+    return result;
+
+  } catch (err: any) {
+    console.error('Credit consumption failed:', err.message);
+    return { error: 'Transaction failed' };
+  }
+}
+
+// 内部功能：增加积分 (由 Webhook 或购买成功后调用)
+export async function grantCredits(
+  userId: string,
+  amount: number,
+  description: string,
+  expiresInDays: number | null = null
+) {
+  const expiresAt = expiresInDays ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000) : null;
+
+  try {
+    const result = await db.transaction(async (tx) => {
+      // 1. 更新 users 表总额
+      await tx.update(users)
+        .set({ totalCredits: sql`${users.totalCredits} + ${amount}` })
+        .where(eq(users.id, userId));
+
+      // 2. 插入一条增加流水
+      await tx.insert(creditTransactions).values({
+        userId: userId,
+        amount: amount,
+        description: description,
+        expiresAt: expiresAt,
+      });
+    });
+    return { success: true };
+  } catch (err: any) {
+    return { error: 'Failed to grant credits' };
+  }
+}
+
+// (Cron Job) 每日任务：清除过期的积分
+export async function expireCreditsCronJob() {
+  // 这是一个复杂的查询，伪代码如下：
+  // 1. 找到所有过期的 creditTransactions (amount > 0 且 expiresAt < now())
+  // 2. 计算每个用户总共过期的积分
+  // 3. 在 users 表中减去相应额度
+  // 4. (可选) 插入一条负的“过期”流水
+  console.log('Running daily credit expiration job...');
+  // ... 在 Vercel.json 中配置此路由为 cron job ...
+}
+```
+
+### 如何与 Stripe Webhook 联动？
+
+在 `src/app/api/stripe/webhook/route.ts` (来自第 11 章) 中，我们现在可以调用 `grantCredits`：
+
+```typescript
+// ... in handleCheckoutSessionCompleted or handleSubscriptionUpdated ...
+
+// 以前:
+// await db.update(users).set({ subscriptionStatus: subscription.status })...
+
+// 现在 (当 invoice.paid 发生时):
+const userId = ...; // 从 session metadata 或数据库查询
+const plan = 'pro'; // ... 确定用户购买的计划 ...
+
+if (plan === 'pro') {
+  // 商业逻辑：Pro 计划每月给 1000 积分，有效期 30 天
+  await grantCredits(
+    userId,
+    1000,
+    "Monthly Pro Plan Credits",
+    30
+  );
+}
+
+// ... 更新 subscriptionStatus 等 ...
+```
+
+## 12.3. [代码解析]：分析 src/config/price-config.tsx
+
+现在我们有了后端逻辑，但用户如何选择呢？`src/config/price-config.tsx` 定义了前端定价页所需的所有数据。这是一个“事实的单一来源”，用于驱动 UI。
+
+_注意：这是一个_ _`.tsx`_ _文件，因为它可能包含 React/JSX 元素（例如用于“功能”列表的图标），尽管把它作为纯_ _`.ts`_ _文件也可以。_
+
+```typescript
+// src/config/price-config.ts (或 .tsx)
+
+import { CheckIcon, XIcon } from 'lucide-react'; // 举例
+
+export type PlanId = 'free' | 'pro' | 'lifetime';
+
+export interface PlanFeature {
+  text: string;
+  icon?: React.ReactNode;
+  available: boolean;
+}
+
+export interface PricePlan {
+  id: PlanId;
+  name: string;
+  description: string;
+
+  // 订阅相关
+  stripePriceId: string | null;
+  monthlyPrice: number | null;
+
+  // 一次性购买 (用于 Lifetime)
+  stripeOneTimePriceId: string | null;
+  oneTimePrice: number | null;
+
+  // 积分
+  credits: number; // 每月/一次性 授予的积分
+
+  // UI 功能列表
+  features: PlanFeature[];
+}
+
+// 免费计划
+const freePlan: PricePlan = {
+  id: 'free',
+  name: 'Free',
+  description: 'Start for free, no credit card required.',
+  stripePriceId: null,
+  monthlyPrice: 0,
+  stripeOneTimePriceId: null,
+  oneTimePrice: null,
+  credits: 10, // 注册即送 10 积分 (一次性)
+  features: [
+    { text: '5 AI Summaries per month', available: true },
+    { text: 'Basic Support', available: true },
+    { text: 'Advanced Features', available: false },
+  ],
+};
+
+// Pro 计划
+const proPlan: PricePlan = {
+  id: 'pro',
+  name: 'Pro',
+  description: 'For professionals and teams.',
+  stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID!, // 来自 .env
+  monthlyPrice: 20,
+  stripeOneTimePriceId: null,
+  oneTimePrice: null,
+  credits: 1000, // 每月 1000 积分
+  features: [
+    { text: '1000 AI Credits per month', available: true },
+    { text: 'Priority Support', available: true },
+    { text: 'Advanced Features', available: true },
+  ],
+};
+
+// 终身版 (Lifetime Deal - LTD)
+const lifetimePlan: PricePlan = {
+  id: 'lifetime',
+  name: 'Lifetime',
+  description: 'Pay once, use forever.',
+  stripePriceId: null,
+  monthlyPrice: null,
+  stripeOneTimePriceId: process.env.NEXT_PUBLIC_STRIPE_LIFETIME_PRICE_ID!,
+  oneTimePrice: 299,
+  credits: 50000, // 一次性 50,000 积分 (永不过期)
+  features: [
+    { text: '50,000 One-time Credits', available: true },
+    { text: 'All Pro Features', available: true },
+    { text: 'Lifetime Updates', available: true },
+  ],
+};
+
+// 导出配置
+export const priceConfig = {
+  plans: [freePlan, proPlan, lifetimePlan],
+  // (可选) 额外的积分购买包
+  topUpPacks: [
+    {
+      name: "Credit Pack 500",
+      price: 10,
+      credits: 500,
+      stripePriceId: process.env.NEXT_PUBLIC_STRIPE_TOPUP_500_ID!,
+    }
+  ]
+};
+```
+
+### 如何使用这个配置文件？
+
+在第 11 章的 `src/components/payment/PricingTable.tsx` 中，我们现在可以动态渲染所有计划：
+
+```typescript
+// src/components/payment/PricingTable.tsx
+'use client';
+
+import { useState } from 'react';
+import { createCheckoutSession } from '@/actions/payment.actions';
+import { Button } from '@/components/ui/button';
+import { priceConfig, PricePlan } from '@/config/price-config'; // 导入配置
+
+// ...
+
+// 单个计划卡片
+function PlanCard({ plan }: { plan: PricePlan }) {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleUpgrade = async () => {
+    setIsLoading(true);
+    let priceId: string | null = null;
+
+    if (plan.stripePriceId) {
+      priceId = plan.stripePriceId;
+    } else if (plan.stripeOneTimePriceId) {
+      priceId = plan.stripeOneTimePriceId;
+    } else {
+      console.error("No price ID for this plan");
+      setIsLoading(false);
+      return;
+    }
+
+    // 调用 Server Action (来自 Ch 11)
+    const result = await createCheckoutSession(priceId);
+
+    if (result.url) {
+      window.location.href = result.url;
+    } else {
+      console.error(result.error);
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <div className="border p-4 rounded-lg">
+      <h2>{plan.name}</h2>
+      <p>{plan.description}</p>
+      <b>{plan.credits} Credits</b>
+
+      <ul>
+        {plan.features.map(feature => (
+          <li key={feature.text}>{feature.text}</li>
+        ))}
+      </ul>
+
+      {plan.id !== 'free' && (
+        <Button onClick={handleUpgrade} disabled={isLoading}>
+          {isLoading ? 'Processing...' : `Get ${plan.name}`}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+// 渲染所有计划
+export function PricingTable() {
+  return (
+    <div className="flex gap-4">
+      {priceConfig.plans.map(plan => (
+        <PlanCard key={plan.id} plan={plan} />
+      ))}
+    </div>
+  );
+}
+```
+
+通过这种方式，我们的定价、积分系统和支付流程被完美地分层和解耦。营销团队现在可以通过修改 `price-config.ts` 和 Stripe 后台来调整定价，而无需触碰任何核心功能代码。
+
+### 第 12 章：SAAS 定价：积分与计量系统 - 总结
+
+本章在第 11 章的“订阅”基础之上，构建了一个更灵活的“计量与积分”系统。我们探讨了为什么需要积分系统：它将**功能与定价解耦**，允许我们实现灵活的商业模式（如月度订阅、一次性购买、终身版）和精细化计量（不同功能消耗不同积分）。
+
+在代码层面，我们：
+
+1. **扩展了数据库** (`db/schema.ts`)：在 `users` 表中添加了 `totalCredits`，并创建了一个 `creditTransactions` 流水表，以实现健壮的积分跟踪。
+2. **创建了原子性操作** (`credit.actions.ts`)：利用 Drizzle 事务创建了 `consumeCredits`（消耗积分）和 `grantCredits`（授予积分）这两个核心的 Server Action，确保数据的一致性。
+3. **集中化配置** (`config/price-config.tsx`)：我们将所有定价方案（免费、Pro、终身版）及其对应的 Stripe Price ID 和积分数量定义在一个配置文件中，使前端 `PricingTable.tsx` 组件可以动态渲染，实现了“配置驱动 UI”。
+

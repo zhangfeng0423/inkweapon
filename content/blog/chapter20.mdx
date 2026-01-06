@@ -1,6 +1,6 @@
 ---
-title: "第 20 章：架构师避坑指南"
-description: "欢迎来到本书的最后一部分。在过去的 19 章中，我们一起经历了一场从 Python 后端到现代 JS 全栈的思维转变。我们构建了一个功能完备、可观测、可测试、可安全部署的 AI SAAS。"
+title: "Chapter 20: Architect's Pitfall Avoidance Guide"
+description: "Welcome to the final part of this book. In the past 19 chapters, we've gone through a mindset shift from Python backend to modern JS full-stack together. We've built a feature-complete, observable, testable, safely deployable AI SAAS."
 date: "2026-01-06"
 published: true
 categories: ["typescript", "python", "react"]
@@ -9,37 +9,37 @@ image: "/images/blog/post-1.png"
 ---
 
 
-# 第 20 章：架构师避坑指南
+# Chapter 20: Architect's Pitfall Avoidance Guide
 
-欢迎来到本书的最后一部分。在过去的 19 章中，我们一起经历了一场从 Python 后端到现代 JS 全栈的思维转变。我们构建了一个功能完备、可观测、可测试、可安全部署的 AI SAAS。
+Welcome to the final part of this book. In the past 19 chapters, we've gone through a mindset shift from Python backend to modern JS full-stack together. We've built a feature-complete, observable, testable, safely deployable AI SAAS.
 
-你现在已经是一名全栈架构师了。但架构师的工作不仅仅是“构建”，更是“预见”。一个优秀的架构师能提前识别出那些看似便捷、实则后患无穷的“陷阱”或“反模式”(Anti-Patterns)。
+You're now a full-stack architect. But an architect's job isn't just "building"—it's "anticipating". A great architect can identify those "traps" or "anti-patterns" that seem convenient but have disastrous consequences.
 
-本章是我们在实战中总结的“避坑指南”。我们将深入探讨那些 Next.js 新手（尤其是从 Python 等传统后端迁移而来）最容易犯的错误，特别是在 RSC 缓存和数据库性能方面。掌握了这些，你才能真正驾驭这套现代技术栈，而不是被它所困。
+This chapter is our "pitfall avoidance guide" summarized from real-world experience. We'll dive deep into the most common mistakes Next.js beginners make (especially those migrating from traditional backends like Python), particularly around RSC caching and database performance. Mastering these allows you to truly wield this modern tech stack instead of being trapped by it.
 
-## 20.1. [Skill 实战]：深入讲解常见反模式
+## 20.1. [Skill Practice]: Deep Dive into Common Anti-Patterns
 
-**[Skill 实战：claude-nextjs-skills/nextjs-anti-patterns/SKILL.md]**
+**[Skill Practice: claude-nextjs-skills/nextjs-anti-patterns/SKILL.md]**
 
-这份“反模式”清单，是每一个 Next.js 开发者都应该牢记于心的“必读列表”。
+This "anti-pattern" list is a "must-read" every Next.js developer should keep in mind.
 
-### 反模式一：在服务器组件中 `import "use client"` 组件
+### Anti-Pattern #1: Importing `"use client"` Components in Server Components
 
-这是一个最常见、也最致命的性能陷阱。
+This is the most common and deadly performance trap.
 
-- **错误的做法**：
+- **Wrong Approach**:
 
     ```typescript
     // src/components/HeavyClientComponent.tsx
     'use client';
-    import 'heavy-library'; // 假设这是一个 500KB 的库
+    import 'heavy-library'; // Assume this is a 500KB library
     export default function HeavyClientComponent() { /* ... */ }
-    
-    // src/app/page.tsx (服务器组件)
-    import HeavyClientComponent from '@/components/HeavyClientComponent'; // [!] 陷阱！
-    
+
+    // src/app/page.tsx (Server Component)
+    import HeavyClientComponent from '@/components/HeavyClientComponent'; // [!] Trap!
+
     export default function Page() {
-      // ... 一些服务器逻辑 ...
+      // ... some server logic ...
       return (
         <div>
           <HeavyClientComponent />
@@ -48,50 +48,50 @@ image: "/images/blog/post-1.png"
     }
     ```
 
-- **为什么是陷阱？**：你可能认为 `Page` 是服务器组件，`HeavyClientComponent` 是客户端组件，它们各自独立。但 Next.js 的规则是：**一旦一个文件被标记为** **`"use client"`****，它导入的** _**所有**_ **依赖项都会被打包进客户端 JS 包 (Client Bundle)**。
-- **在上面的例子中**：`Page.tsx` _自身_ 并没有被标记为 `"use client"`，但它 `import` 了一个客户端组件。这没问题。但如果反过来：
+- **Why is it a trap?**: You might think `Page` is a server component, `HeavyClientComponent` is a client component, and they're independent. But Next.js's rule is: **once a file is marked as `"use client"`, _all_ its dependencies get bundled into the client JS bundle**.
+- **In the above example**: `Page.tsx` itself isn't marked as `"use client"`, but it `import`s a client component. That's fine. But what if reversed?
 
     ```typescript
     // src/components/ClientWrapper.tsx
     'use client';
-    import ServerComponent from '@/components/ServerComponent'; // [!] 陷阱！
-    
+    import ServerComponent from '@/components/ServerComponent'; // [!] Trap!
+
     export default function ClientWrapper() {
       return (
         <div>
-          <ServerComponent /> {/* 这个组件现在是客户端组件了 */}
+          <ServerComponent /> {/* This component is now a client component */}
         </div>
       );
     }
     ```
 
-    在这个例子中，`ServerComponent.tsx`（即使它没有 `"use client"` 标记）也会被打包到客户端！因为它被一个客户端文件 `import` 了。这会不经意间让你的客户端 JS 包体积暴增。
+    In this example, `ServerComponent.tsx` (even without `"use client"` marker) will also be bundled to the client! Because it's imported by a client file. This unwittingly bloats your client JS bundle size.
 
-- **正确做法 (使用** **`children`** **prop)**：
+- **Correct Approach (using `children` prop)**:
 
     ```typescript
     // src/components/ClientWrapper.tsx
     'use client';
     import { useState } from 'react';
-    
-    // 接受一个 ReactNode 类型的 children prop
+
+    // Accept a ReactNode-type children prop
     export default function ClientWrapper({ children }: { children: React.ReactNode }) {
       const [count, setCount] = useState(0);
       return (
         <div>
           <button onClick={() => setCount(c => c + 1)}>Click {count}</button>
-          {children} {/* 在这里渲染服务器组件 */}
+          {children} {/* Render server component here */}
         </div>
       );
     }
-    
-    // src/app/page.tsx (服务器组件)
+
+    // src/app/page.tsx (Server Component)
     import ClientWrapper from '@/components/ClientWrapper';
-    import ServerComponent from '@/components/ServerComponent'; // 真正的数据获取组件
-    
+    import ServerComponent from '@/components/ServerComponent'; // Real data-fetching component
+
     export default function Page() {
       return (
-        // 将服务器组件作为 'children' 传递给客户端组件
+        // Pass server component as 'children' to client component
         <ClientWrapper>
           <ServerComponent />
         </ClientWrapper>
@@ -99,18 +99,18 @@ image: "/images/blog/post-1.png"
     }
     ```
 
-    在这个模式中，`ServerComponent` 在服务器上被渲染，它的 HTML 被“塞”进 `ClientWrapper` 中。`ClientWrapper` 及其依赖项被发送到客户端，但 `ServerComponent` 及其数据获取逻辑_永远不会_发送到客户端。
+    In this pattern, `ServerComponent` is rendered on the server, and its HTML is "slotted" into `ClientWrapper`. `ClientWrapper` and its dependencies are sent to the client, but `ServerComponent` and its data-fetching logic _never_ get sent to the client.
 
-### 反模式二：在客户端组件中获取数据 (useEffect + fetch)
+### Anti-Pattern #2: Fetching Data in Client Components (useEffect + fetch)
 
-这是从 Python/Jinja2 或传统 React SPA 迁移过来最难改的习惯。
+This is the hardest habit to break when migrating from Python/Jinja2 or traditional React SPAs.
 
-- **错误的做法 (****`"use client"`****)**：
+- **Wrong Approach (`"use client"`)**:
 
     ```typescript
     'use client';
     import { useState, useEffect } from 'react';
-    
+
     export default function Dashboard() {
       const [data, setData] = useState(null);
       useEffect(() => {
@@ -118,188 +118,188 @@ image: "/images/blog/post-1.png"
           .then(res => res.json())
           .then(setData);
       }, []);
-    
-      if (!data) return <div>Loading...</div>; // [!] 布局偏移 (CLS)
-      return <div>{data.name}</div>; // [!] 客户端-服务器瀑布流
+
+      if (!data) return <div>Loading...</div>; // [!] Layout shift (CLS)
+      return <div>{data.name}</div>; // [!] Client-server waterfall
     }
     ```
 
-- **为什么是陷阱？**：
-    1. **性能瀑布流**：服务器返回一个“空”的 `Dashboard` HTML -> 浏览器下载 JS -> React 水合 -> `useEffect` 运行 -> _然后才_向 `/api/my-data` 发起第二次请求 -> API 路由再回头去查数据库。这个往返（waterfall）极大地拖慢了内容的呈现。
-    2. **布局偏移 (CLS)**：页面先显示 `Loading...`，数据返回后再替换为 `<div>...</div>`，导致页面内容“跳动”，Web Vitals 指标极差。
-- **正确做法 (RSC)**：
+- **Why is it a trap?**:
+    1. **Performance Waterfall**: Server returns empty `Dashboard` HTML → Browser downloads JS → React hydrates → `useEffect` runs → _then_ makes second request to `/api/my-data` → API route then queries database. This round-trip dramatically slows content rendering.
+    2. **Layout Shift (CLS)**: Page first shows `Loading...`, then replaces with `<div>...</div>` after data returns, causing content to "jump" and poor Web Vitals.
+- **Correct Approach (RSC)**:
 
     ```typescript
-    // src/app/dashboard/page.tsx (服务器组件)
+    // src/app/dashboard/page.tsx (Server Component)
     import { db } from '@/db';
-    
+
     async function getMyData() {
-      // 直接在服务器上访问数据库
+      // Directly access database on server
       return db.query.users.findFirst({ ... });
     }
-    
+
     export default async function DashboardPage() {
-      // 1. 在服务器上等待数据
+      // 1. Wait for data on server
       const data = await getMyData();
-    
-      // 2. 带着数据一起返回 HTML
+
+      // 2. Return HTML with data
       return <div>{data.name}</div>;
     }
     ```
 
-    没有 `useEffect`，没有 `useState`，没有 `Loading...`，没有 API 路由，没有客户端-服务器瀑布流。服务器一次性返回完整的 HTML，性能最优。
+    No `useEffect`, no `useState`, no `Loading...`, no API route, no client-server waterfall. Server returns complete HTML in one shot for optimal performance.
 
-### 反模式三：为“读”操作使用 Server Actions
+### Anti-Pattern #3: Using Server Actions for "Read" Operations
 
-Server Actions (第六章) 非常强大，但它们是为**“写”操作（Mutations）**而设计的（`POST`, `PUT`, `DELETE`）。
+Server Actions (Chapter 6) are very powerful, but they're designed for **"write" operations (Mutations)** (`POST`, `PUT`, `DELETE`).
 
-- **错误的做法**：
+- **Wrong Approach**:
 
     ```typescript
     // src/actions/data.actions.ts
     'use server';
     export async function getMyData() { return db.query...; }
-    
+
     // src/app/page.tsx
     import { getMyData } from '@/actions/data.actions';
     export default async function Page() {
-      const data = await getMyData(); // [!] 技术上可行，但违反了模式
+      const data = await getMyData(); // [!] Technically works, but violates pattern
       // ...
     }
     ```
 
-- **为什么是陷阱？**：这在功能上可以工作，但它增加了不必要的抽象。RSC 的核心优势就是_可以_直接访问数据源。将“读”操作也包装成 Server Action，会使代码更难理解（“这个函数是在哪里被调用的？”），并且错过了 RSC 提供的更简单的缓存和数据流模式。
-- **正确做法**：将“读”操作（数据获取）保留为 `page.tsx` 或 `layout.tsx` 内部的简单 `async` 函数，或者放在一个 `src/lib/data.ts` 辅助文件中。**只为“写”操作（例如表单提交）使用 Server Actions**。
+- **Why is it a trap?**: This works functionally but adds unnecessary abstraction. RSC's core advantage is that it _can_ access data sources directly. Wrapping "read" operations as Server Actions makes code harder to understand ("where is this function called?") and misses out on RSC's simpler caching and data flow patterns.
+- **Correct Approach**: Keep "read" operations (data fetching) as simple `async` functions within `page.tsx` or `layout.tsx`, or in a `src/lib/data.ts` helper file. **Only use Server Actions for "write" operations (like form submissions)**.
 
-## 20.2. RSC 缓存陷阱
+## 20.2. RSC Caching Traps
 
-这是 Next.js 15+ 中最高级、也最容易出错的地方。**默认情况下，Next.js 会在服务器上缓存** _**一切**_。
+This is the most advanced and error-prone area in Next.js 15+. **By default, Next.js caches _everything_ on the server**.
 
-_基于 next-devtools-mcp 库中的 (cache-components) 知识库_
+_Based on knowledge from (cache-components) in next-devtools-mcp library_
 
-### 陷阱一：“我的数据为什么不刷新？”(全路由缓存)
+### Trap #1: "Why isn't my data refreshing?" (Full Route Cache)
 
-- **场景**：你写了一个仪表盘页面 `src/app/dashboard/page.tsx`，它 `await db.query.users...` 来获取用户数据。
-- **问题**：你登录 -> 访问仪表盘 -> 退出登录 -> 换一个用户登录 -> 访问仪表盘... 你发现你看到的_仍然是第一个用户的数据_！
-- **为什么是陷阱？**：Next.js 默认会**积极地**缓存服务器组件的渲染结果（全路由缓存）。如果你的页面是动态的（例如 `page.tsx`），它会在第一次请求时被渲染和缓存。后续的导航（`<Link href="...">`）会命中这个缓存，而_不会_重新执行 `await db.query...`。
-- **正确做法 (动态渲染)**：
-    - **方法 A (推荐)**：在你的数据获取函数中，使用 `fetch(..., { cache: 'no-store' })`。如果你没有使用 `fetch`（例如 Drizzle），请使用方法 B。
-    - **方法 B (Drizzle/Prisma 用户)**：在 `page.tsx` 文件的顶部添加：
+- **Scenario**: You wrote a dashboard page `src/app/dashboard/page.tsx` that `await db.query.users...` to fetch user data.
+- **Problem**: You log in → visit dashboard → log out → log in as different user → visit dashboard... and you see _still the first user's data_!
+- **Why is it a trap?**: Next.js **aggressively** caches server component render results by default (full route cache). If your page is dynamic (e.g., `page.tsx`), it's rendered and cached on first request. Subsequent navigation (`<Link href="...">`) hits this cache and _doesn't_ re-execute `await db.query...`.
+- **Correct Approach (Dynamic Rendering)**:
+    - **Method A (Recommended)**: In your data-fetching function, use `fetch(..., { cache: 'no-store' })`. If you're not using `fetch` (e.g., Drizzle), use Method B.
+    - **Method B (Drizzle/Prisma users)**: Add at the top of your `page.tsx` file:
 
         ```typescript
         export const dynamic = 'force-dynamic';
-        // 这会告诉 Next.js 永远不要缓存这个页面，
-        // 每次请求都重新渲染。
+        // This tells Next.js to never cache this page,
+        // re-render on every request.
         ```
 
-    - **方法 C (按需刷新)**：如果你希望页面被缓存，但在特定事件（例如用户更新了个人资料）后刷新，你必须在相应的 Server Action 中调用 `revalidatePath('/dashboard')`。
+    - **Method C (On-demand revalidation)**: If you want the page cached but refreshed after specific events (e.g., user updates profile), you must call `revalidatePath('/dashboard')` in the corresponding Server Action.
 
-### 陷阱二：`fetch` vs Drizzle/Prisma (缓存与重复数据删除)
+### Trap #2: `fetch` vs Drizzle/Prisma (Caching & Deduplication)
 
-- **场景**：你在一个页面上方的 `<Navbar />` (RSC) 和下方的 `<Profile />` (RSC) 两个组件中都调用了 `await db.query.users.findFirst(...)` 来获取当前用户信息。
-- **问题**：你查看服务器日志，发现 Next.js 向你的数据库发起了**两次** `SELECT` 查询，即使它们请求的是完全相同的数据。
-- **为什么是陷阱？**：Next.js 只会自动为 `fetch` API 提供请求的**重复数据删除 (deduping)**。它无法自动识别你的 `db.query` 调用是相同的。
-- **正确做法 (使用 React** **`cache`****)**：
+- **Scenario**: You call `await db.query.users.findFirst(...)` in both a `<Navbar />` (RSC) at the top and `<Profile />` (RSC) at the bottom of a page to fetch current user info.
+- **Problem**: You check server logs and find Next.js makes **two** `SELECT` queries to your database, even though they're requesting identical data.
+- **Why is it a trap?**: Next.js only automatically provides request **deduplication** for the `fetch` API. It can't automatically recognize that your `db.query` calls are identical.
+- **Correct Approach (using React `cache`)**:
 
     ```typescript
     // src/lib/data.ts
     import { cache } from 'react';
     import { db } from '@/db';
-    
-    // 关键：将你的数据库调用包装在 React 的 cache() 函数中
+
+    // Key: Wrap your database call in React's cache() function
     export const getCachedUser = cache(async (userId: string) => {
       console.log('FETCHING FROM DB:', userId);
       return db.query.users.findFirst({ where: eq(users.id, userId) });
     });
-    
+
     // src/components/Navbar.tsx (RSC)
     import { getCachedUser } from '@/lib/data';
     export async function Navbar() {
-      const user = await getCachedUser('user_123'); // 第一次调用
+      const user = await getCachedUser('user_123'); // First call
       // ...
     }
-    
+
     // src/components/Profile.tsx (RSC)
     import { getCachedUser } from '@/lib/data';
     export async function Profile() {
-      const user = await getCachedUser('user_123'); // 第二次调用
+      const user = await getCachedUser('user_123'); // Second call
       // ...
     }
     ```
 
-    现在，当 `Navbar` 和 `Profile` 在同一次渲染中被调用时，`console.log('FETCHING FROM DB...')` 只会打印**一次**。`cache` 函数会“记住”在同一次渲染中对具有相同参数（`'user_123'`）的调用的结果，并立即返回它，从而避免了 N+1 查询。
+    Now, when `Navbar` and `Profile` are called in the same render, `console.log('FETCHING FROM DB...')` will only print **once**. The `cache` function "remembers" the result of calls with the same parameters (`'user_123'`) in the same render and returns it immediately, avoiding N+1 queries.
 
-## 20.3. Supabase vs Drizzle 的性能陷阱
+## 20.3. Supabase vs Drizzle Performance Traps
 
-最后，让我们回顾一下我们在第七章做出的架构选择，看看这两个路径各自的性能陷阱。
+Finally, let's review the architectural choice we made in Chapter 7 and examine the performance pitfalls of each path.
 
-### Supabase 陷阱一：连接池 (PgBouncer) 被耗尽
+### Supabase Trap #1: Connection Pool (PgBouncer) Exhaustion
 
-- **问题**：你的 SAAS 应用上线了，突然 Sentry (第 17 章) 开始报警 "Too many clients"（客户端过多），应用崩溃。
-- **为什么是陷阱？**：正如我们在 7.2.3 节中提到的，Supabase（和任何 Postgres）都有连接数限制。Next.js 的 Serverless/Edge 环境（RSC, Server Actions）可能会为**每一个**并发请求创建一个**新的**数据库连接。1000 个并发用户 = 1000 个连接 = 数据库宕机。
-- **避坑指南 (Rule 1)**：
-    1. **必须**使用 Supabase 提供的 **PgBouncer** 连接池模式。
-    2. 确保你的数据库连接字符串包含了 `?pgbouncer=true`。
-    3. **不要**在你的 Serverless 函数中创建“全局”的 `supabase` 客户端实例。请确保在函数执行完毕后连接被正确释放。
+- **Problem**: Your SAAS app goes live, and suddenly Sentry (Chapter 17) starts alerting "Too many clients", app crashes.
+- **Why is it a trap?**: As mentioned in section 7.2.3, Supabase (and any Postgres) has connection limits. Next.js's Serverless/Edge environment (RSC, Server Actions) can create a **new** database connection for **every** concurrent request. 1000 concurrent users = 1000 connections = database down.
+- **Avoidance Guide (Rule 1)**:
+    1. **Must** use Supabase's provided **PgBouncer** connection pooling mode.
+    2. Ensure your database connection string includes `?pgbouncer=true`.
+    3. **Don't** create "global" `supabase` client instances in your Serverless functions. Ensure connections are properly released after function execution.
 
-### Supabase 陷阱二：缓慢的 RLS (行级别安全) 策略
+### Supabase Trap #2: Slow RLS (Row-Level Security) Policies
 
-- **问题**：你的应用在本地运行飞快，但到了生产环境，所有的数据查询（`SELECT`）都变得异常缓慢。
-- **为什么是陷阱？**：RLS (Rule 2) 非常强大，但它附加在你的**每一条** SQL 查询上。如果你为了方便，在 RLS 策略中写了一个复杂的 `JOIN` 或者调用了一个自定义的 SQL 函数（例如 `check_user_permission()`），这个复杂操作会在**每次** **`SELECT`** 时都被执行。
-- **避坑指南**：
-    1. 保持 RLS 策略**极度简单**。
-    2. 理想的 RLS 策略只应该包含对 `auth.uid()` 和被查询表中列的直接比较（例如 `USING (auth.uid() = user_id)`）。
-    3. 如果你需要复杂的权限检查，请在你的应用层（Server Action 或 Server Component）中执行，而不是在 RLS 中。
+- **Problem**: Your app runs fast locally, but in production, all data queries (`SELECT`) become extremely slow.
+- **Why is it a trap?**: RLS (Rule 2) is very powerful, but it attaches to **every single** SQL query. If for convenience you write a complex `JOIN` in an RLS policy or call a custom SQL function (e.g., `check_user_permission()`), this complex operation executes on **every** `SELECT`.
+- **Avoidance Guide**:
+    1. Keep RLS policies **extremely simple**.
+    2. Ideal RLS policies should only contain direct comparisons between `auth.uid()` and columns in the queried table (e.g., `USING (auth.uid() = user_id)`).
+    3. If you need complex permission checks, perform them in your application layer (Server Action or Server Component), not in RLS.
 
-### Drizzle 陷阱一：N+1 查询 (忘记 `with:`)
+### Drizzle Trap #1: N+1 Queries (Forgetting `with:`)
 
-- **问题**：你的仪表盘页面需要加载 100 条“项目”记录，并显示每个项目的“所有者”名称。页面加载需要 10 秒钟。
-- **为什么是陷阱？**：这是 Drizzle（或任何 ORM）的经典 N+1 查询陷阱。
+- **Problem**: Your dashboard page needs to load 100 "project" records and display each project's "owner" name. Page load takes 10 seconds.
+- **Why is it a trap?**: This is the classic N+1 query trap for Drizzle (or any ORM).
 
     ```typescript
-    // 错误的做法 (101 次查询)
-    const projects = await db.query.projects.findMany(); // 1 次查询
+    // Wrong approach (101 queries)
+    const projects = await db.query.projects.findMany(); // 1 query
     const projectsWithOwners = await Promise.all(
       projects.map(async (p) => {
-        // N 次查询 (N = projects.length)
+        // N queries (N = projects.length)
         const owner = await db.query.users.findFirst({ where: eq(users.id, p.ownerId) });
         return { ...p, owner };
       })
     );
     ```
 
-- **避坑指南**：**始终使用 Drizzle 的** **`with:`** **语法来预加载（Eager Load）关联数据**。
+- **Avoidance Guide**: **Always use Drizzle's `with:` syntax to eagerly load related data**.
 
     ```typescript
-    // 正确的做法 (1 次查询)
+    // Correct approach (1 query)
     const projectsWithOwners = await db.query.projects.findMany({
       with: {
-        owner: true // 告诉 Drizzle 在同一次查询中 JOIN users 表
+        owner: true // Tell Drizzle to JOIN users table in same query
       }
     });
     ```
 
-    Drizzle 会将其编译为一个高效的 `JOIN` SQL 语句，使查询次数从 101 次减少到 1 次。
+    Drizzle compiles this to an efficient `JOIN` SQL statement, reducing queries from 101 to 1.
 
-### Drizzle 陷阱二：在生产环境中使用 `db:push`
+### Drizzle Trap #2: Using `db:push` in Production
 
-- **问题**：你只是想给 `users` 表加一个小字段。你在本地修改了 `schema.ts`，然后（像开发时一样）在生产服务器上运行了 `pnpm db:push`。突然，你的 `projects` 表（以及所有数据）消失了。
-- **为什么是陷阱？**：`drizzle-kit db:push` 是一个**破坏性**的开发工具。它会“同步”数据库状态以匹配你的 schema。如果它认为你需要删除一个表来添加一个新字段（例如由于复杂的约束变更），它会**毫不犹豫地** **`DROP TABLE`**。
-- **避坑指南 (Rule 10)**：
-    1. **永远不要**在生产环境中使用 `db:push`。
-    2. **始终**使用迁移工作流（第 10 章）：
-    3. `pnpm db:generate`：生成一个 SQL 迁移文件（例如 `0001_add_user_avatar.sql`）。
-    4. **手动审查**这个 SQL 文件，确保它只做了你想做的事（例如 `ALTER TABLE` 而不是 `DROP TABLE`）。
-    5. `pnpm db:migrate`：安全地在生产环境（或通过 CI）中运行这个已审查的 SQL 文件。
+- **Problem**: You just want to add a small field to the `users` table. You modify `schema.ts` locally, then (like in development) run `pnpm db:push` on the production server. Suddenly, your `projects` table (and all data) disappears.
+- **Why is it a trap?**: `drizzle-kit db:push` is a **destructive** development tool. It "syncs" database state to match your schema. If it thinks you need to drop a table to add a new field (e.g., due to complex constraint changes), it will **unhesitatingly** `DROP TABLE`.
+- **Avoidance Guide (Rule 10)**:
+    1. **Never** use `db:push` in production.
+    2. **Always** use the migration workflow (Chapter 10):
+    3. `pnpm db:generate`: Generate a SQL migration file (e.g., `0001_add_user_avatar.sql`).
+    4. **Manually review** this SQL file to ensure it only does what you want (e.g., `ALTER TABLE` not `DROP TABLE`).
+    5. `pnpm db:migrate`: Safely run this reviewed SQL file in production (or via CI).
 
-## 第 20 章总结
+## Chapter 20 Summary
 
-在本章中，我们直面了从 Python 传统后端转向 Next.js 全栈架构时最常见的、也是最危险的陷阱。这些反模式和性能问题，是区分“能用”和“卓越”的架构师的分水岭。
+In this chapter, we confronted the most common and dangerous pitfalls when transitioning from Python traditional backends to Next.js full-stack architecture. These anti-patterns and performance issues are what distinguish "usable" from "excellent" architects.
 
-- **RSC 反模式**：我们学会了如何通过 `children` prop 来正确组合服务器和客户端组件，避免了客户端 JS 包的意外膨胀。我们强调了必须在服务器组件中获取数据，以避免客户端-服务器瀑布流和布局偏移。
-- **RSC 缓存陷阱**：我们揭示了 Next.js 激进缓存策略的“双刃剑”。我们学会了使用 `export const dynamic = 'force-dynamic'` 来处理动态数据，并使用 React 的 `cache()` 函数来防止在同一次渲染中发生 N+1 数据库查询。
-- **数据库性能陷阱**：我们重温了 Supabase 和 Drizzle 的核心挑战。对于 Supabase，关键在于正确使用 PgBouncer (连接池) 和保持 RLS 策略的简洁。对于 Drizzle，关键在于使用 `with:` 预加载数据以避免 N+1 查询，并**永远**使用 `db:migrate`（而不是 `db:push`）来管理生产环境的数据库变更。
+- **RSC Anti-Patterns**: We learned how to properly compose server and client components using `children` props, avoiding unintended client JS bundle bloat. We emphasized that data must be fetched in server components to avoid client-server waterfalls and layout shifts.
+- **RSC Caching Traps**: We revealed the "double-edged sword" of Next.js's aggressive caching strategy. We learned to use `export const dynamic = 'force-dynamic'` for dynamic data and React's `cache()` function to prevent N+1 database queries in the same render.
+- **Database Performance Traps**: We revisited core challenges with Supabase and Drizzle. For Supabase, the key is proper PgBouncer (connection pooling) usage and keeping RLS policies simple. For Drizzle, the key is using `with:` to preload data and avoid N+1 queries, and **always** using `db:migrate` (not `db:push`) to manage production database changes.
 
-这本书的旅程即将结束。你已经掌握了从前端 UI 到后端 API、从数据库架构到 DevOps 流水线、从支付集成到 AI 服务的全栈技能。你现在所拥有的，不仅仅是“Python 开发者”或“Next.js 开发者”的标签，而是“全栈架构师”的视野和能力。
+This book's journey is nearing its end. You've mastered full-stack skills from frontend UI to backend API, from database architecture to DevOps pipelines, from payment integration to AI services. What you possess now is not just the label of "Python developer" or "Next.js developer", but the vision and capabilities of a "full-stack architect".
 
 

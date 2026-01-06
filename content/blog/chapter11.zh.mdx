@@ -1,0 +1,422 @@
+---
+title: "第 11 章：支付与订阅 (Stripe)"
+description: "欢迎来到第五部分，也是我们 SAAS 应用的核心商业逻辑。在前面的章节中，我们构建了坚实的应用基础——从前端 UI、RSC 数据流、安全的 Server Actions 到类型安全的 Drizzle ORM 和 'better-auth' 认证。现在，是时候将我们的应用从一个“项目”转变为一个“产品”了：实现付费订阅。"
+date: "2026-01-06"
+published: true
+categories: ["typescript", "python", "react"]
+author: "notion-import"
+image: "/images/blog/post-1.png"
+---
+
+
+# 第 11 章：支付与订阅 (Stripe)
+
+欢迎来到第五部分，也是我们 SAAS 应用的核心商业逻辑。在前面的章节中，我们构建了坚实的应用基础——从前端 UI、RSC 数据流、安全的 Server Actions 到类型安全的 Drizzle ORM 和 'better-auth' 认证。现在，是时候将我们的应用从一个“项目”转变为一个“产品”了：**实现付费订阅**。
+
+对于 Python 开发者来说，你可能熟悉 `stripe-python` 库，通过 Flask 或 Django 的 API 路由来创建支付意图 (Payment Intents)。在 Next.js 全栈架构中，逻辑是相似的，但实现方式更具现代感和集成度。我们将利用 Server Actions 来_发起_支付流程，并利用 Route Handlers 来_接收_来自 Stripe 的状态更新（Webhooks）。
+
+本章，我们将深入实战项目的 `src/payment/` 目录，集成 Stripe Checkout 和客户门户，并建立一个健壮的 Webhook 系统来处理订阅生命周期。
+
+## 11.1. 架构：Stripe Checkout vs. Elements
+
+在集成 Stripe 时，你面临的第一个架构决策就是：是使用 **Stripe Checkout** 还是 **Stripe Elements**？
+
+### 路径 A：Stripe Checkout (Stripe 托管支付页面)
+
+- **是什么**：一个由 Stripe 托管和优化的完整支付页面。
+- **流程**：
+    1. 你的服务器（通过 Server Action）创建一个 "Checkout Session"。
+    2. 服务器返回该 Session 的 URL。
+    3. 你的客户端（浏览器）重定向到这个 Stripe 网址。
+    4. 用户在 Stripe 的页面上完成支付。
+    5. Stripe 将用户重定向回你的应用（`success_url` 或 `cancel_url`）。
+- **优势**：
+    - **极速集成**：工作量最小，几行代码就能搞定。
+    - **合规性**：自动处理 PCI、SCA (强客户认证)、3D Secure 等复杂问题。
+    - **高转化率**：Stripe 持续优化此页面，支持多种支付方式（Apple Pay, Google Pay, 信用卡）、自动本地化和地址补全。
+- **劣势**：
+    - **定制化低**：你无法完全控制页面的 UI/UX。
+    - **短暂跳出**：用户会短暂离开你的网站。
+
+### 路径 B：Stripe Elements (嵌入式 UI 组件)
+
+- **是什么**：一套由 Stripe 提供的预构建 UI 组件（如卡号、有效期、CVC 输入框），你可以将它们嵌入到自己的支付表单中。
+- **流程**：
+    1. 你在你的应用中构建一个表单 (`<form>`)。
+    2. 使用 `@stripe/react-stripe-js` 将 Elements 嵌入表单。
+    3. 用户提交表单时，你的客户端 JS 首先调用 `stripe.confirmPayment()`。
+    4. 你在服务器端处理支付意图 (Payment Intent) 的状态。
+- **优势**：
+    - **完全控制**：UI/UX 与你的应用无缝集成，用户永远不会离开你的网站。
+    - **灵活性**：可以构建非常复杂的支付流程。
+- **劣势**：
+    - **集成复杂**：你需要自己处理 UI 状态、错误、加载、合规性（尽管 Elements 简化了 PCI）。
+    - **维护成本高**：更多的前端代码需要维护。
+
+### 架构决策：Checkout + Customer Portal
+
+对于我们的 SAAS 模板项目，我们采用 **“速度与健壮性并存”** 的策略：
+
+1. **新订阅**：使用 **Stripe Checkout**。这让我们能以最快速度、最安全合规的方式让用户付费。
+2. **管理订阅**：使用 **Stripe Customer Portal**。这是一个与 Checkout 类似的 Stripe 托管页面，允许已订阅的用户自行管理他们的订阅（如升级/降级、取消、更新信用卡、查看发票）。
+
+这种组合（Checkout + Customer Portal）为 SAAS 提供了最佳的投入产出比，让我们能专注于核心业务逻辑，而不是支付表单的 UI 细节。
+
+## 11.2. 核心：Webhook 处理与幂等性 (Rule 3)
+
+如果说 Checkout 是用户_发起_支付的前门，那么 Webhook 就是 Stripe _通知_你支付结果的后门。**你永远不能相信客户端的重定向**（用户可能在支付成功后、跳转回 `success_url` 之前关闭了浏览器）。
+
+Webhook 是你的应用（Drizzle 数据库）与 Stripe（事实来源）保持同步的唯一可靠机制。
+
+### 什么是 Webhook？
+
+Webhook 是一个 API 终结点（Endpoint），在我们的项目中，它是一个 **Route Handler**（例如 `src/app/api/stripe/webhook/route.ts`）。当 Stripe 中发生特定事件时（例如 `invoice.paid`、`customer.subscription.deleted`），Stripe 会向这个 URL 发送一个 `POST` 请求，包体中含有该事件的详细信息。
+
+### 签名验证
+
+任何人都可以向你的 API 终结点发送 `POST` 请求。你如何确保这个请求真的来自 Stripe？
+
+答案是 **Webhook 签名**。Stripe 会使用一个仅你和 Stripe 知道的“签名密钥” (Webhook Secret) 对每个事件进行签名，并将该签名放在 `Stripe-Signature` 请求头中。
+
+在你的 Route Handler 中，**第一件事**就是验证这个签名：
+
+```typescript
+// src/app/api/stripe/webhook/route.ts
+import Stripe from 'stripe';
+import { headers } from 'next/headers';
+import { stripe } from '@/lib/stripe'; // 你的 Stripe Node.js 实例
+
+export async function POST(request: Request) {
+  const body = await request.text();
+  const signature = headers().get('Stripe-Signature') as string;
+
+  let event: Stripe.Event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+  } catch (err: any) {
+    // 签名验证失败
+    return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+  }
+
+  // ... 处理事件 ...
+}
+```
+
+### 架构师法则三：Webhook 必须是幂等的
+
+> 架构师法则三：Webhook 必须是幂等的 (Idempotent)。
+
+网络是不稳定的。Stripe 可能会因为你的服务器暂时宕机、超时或未返回 `200 OK` 状态而**多次重试**发送同一个 Webhook 事件。
+
+**幂等性 (Idempotency)** 意味着“多次执行同一个操作，其结果与执行一次完全相同”。
+
+如果一个 `invoice.paid` 事件导致你给用户增加了 100 个积分。如果这个事件被重发了 3 次，你绝不能给用户增加 300 个积分。
+
+**实现幂等性的策略：**
+
+1. **事件 ID 检查**：最简单的方法。在 Drizzle 中创建一个 `processed_stripe_events` 表。当收到事件时，先检查 `event.id` 是否已在该表中。如果存在，立即返回 `200 OK` 并停止处理。如果不存在，处理该事件，然后将 `event.id` 存入表中（这一切都在一个数据库事务中完成）。
+2. **基于业务逻辑的检查**：在处理 `checkout.session.completed` 时，你的逻辑是“为该客户激活订阅”。如果该客户的订阅_已经_是激活状态，你的代码就不应再次执行激活逻辑，而是直接返回成功。
+
+在我们的 SAAS 模板中，我们将结合使用这两种策略。
+
+## 11.3. [代码解析]：分析 src/payment/ 目录
+
+让我们深入 `src/payment/` 目录（以及相关的 `src/actions/` 和 `src/app/api/`），看看我们的 SAAS 模板是如何实现订阅和客户门户的。
+
+### 架构概览
+
+我们的支付流程有两个截然不同的部分，它们使用了 Next.js 的两种不同功能：
+
+1. **用户发起的动作（Server Actions）**：
+    - `createCheckoutSession`（创建订阅）
+    - `createCustomerPortalSession`（管理订阅）
+    - 这些动作由用户在客户端点击按钮触发。
+2. **Stripe 发起的动作（Route Handler）**：
+    - `src/app/api/stripe/webhook/route.ts`
+    - 这个终结点由 Stripe 的服务器在后台调用，用于同步状态。
+
+### 文件 1：`src/actions/payment.actions.ts`
+
+这个文件包含了用户调用的所有 Server Actions。
+
+```typescript
+'use server';
+
+import { redirect } from 'next/navigation';
+import { stripe } from '@/lib/stripe';
+import { auth } from '@/lib/auth'; // 我们的 'better-auth' 实例
+import { db } from '@/db';
+import { users } from '@/db/schema';
+import { eq } from 'drizzle-orm';
+
+// 获取或创建 Stripe 客户 ID
+async function getOrCreateStripeCustomerId(): Promise<string> {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error('Unauthorized');
+
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, session.user.id),
+  });
+
+  if (!user) throw new Error('User not found');
+
+  if (user.stripeCustomerId) {
+    return user.stripeCustomerId;
+  }
+
+  // 在 Stripe 上创建新客户
+  const customer = await stripe.customers.create({
+    email: user.email!,
+    name: user.name,
+    metadata: {
+      userId: user.id,
+    },
+  });
+
+  // 将新 ID 存回我们的 Drizzle 数据库
+  await db
+    .update(users)
+    .set({ stripeCustomerId: customer.id })
+    .where(eq(users.id, user.id));
+
+  return customer.id;
+}
+
+// Server Action: 创建 Stripe Checkout 会话
+export async function createCheckoutSession(priceId: string) {
+  const customerId = await getOrCreateStripeCustomerId();
+  const session = await auth();
+
+  const YOUR_DOMAIN = process.env.NEXT_PUBLIC_APP_URL!;
+
+  try {
+    const checkoutSession = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'subscription',
+      customer: customerId,
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      success_url: `${YOUR_DOMAIN}/dashboard?payment=success`,
+      cancel_url: `${YOUR_DOMAIN}/dashboard?payment=cancelled`,
+      // 将用户 ID 传递给 webhook，以便我们知道是谁订阅了
+      metadata: {
+        userId: session?.user?.id,
+      }
+    });
+
+    // 返回 session URL，客户端将进行重定向
+    return { url: checkoutSession.url };
+  } catch (error) {
+    console.error(error);
+    return { error: 'Failed to create checkout session.' };
+  }
+}
+
+// Server Action: 创建客户门户会话
+export async function createCustomerPortalSession() {
+  const customerId = await getOrCreateStripeCustomerId();
+  const YOUR_DOMAIN = process.env.NEXT_PUBLIC_APP_URL!;
+
+  try {
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: `${YOUR_DOMAIN}/dashboard/settings`,
+    });
+
+    // 返回 URL，客户端重定向
+    return { url: portalSession.url };
+  } catch (error) {
+    console.error(error);
+    return { error: 'Failed to create customer portal session.' };
+  }
+}
+```
+
+### 文件 2：`src/app/api/stripe/webhook/route.ts`
+
+这是我们后台的“同步中心”，它实现了 11.2 节中讨论的签名验证和事件处理。
+
+```typescript
+import Stripe from 'stripe';
+import { headers } from 'next/headers';
+import { stripe } from '@/lib/stripe';
+import { db } from '@/db';
+import { users, subscriptions } from '@/db/schema'; // 假设我们有一个 subscriptions 表
+import { eq } from 'drizzle-orm';
+
+// Helper 函数，用于更新数据库
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+  const userId = session.metadata?.userId;
+  const subscriptionId = session.subscription as string;
+
+  if (!userId) {
+    console.error('Webhook Error: Missing userId in session metadata');
+    return;
+  }
+
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+
+  // 在 Drizzle 中更新/创建订阅记录
+  // 注意：这里的逻辑需要幂等性！
+  // 假设我们使用 'upsert'（更新或插入）逻辑
+  await db.insert(subscriptions).values({
+    userId: userId,
+    stripeSubscriptionId: subscription.id,
+    status: subscription.status,
+    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+  }).onConflictDoUpdate({
+    target: subscriptions.stripeSubscriptionId,
+    set: {
+      status: subscription.status,
+      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+    }
+  });
+
+  // 同时更新 user 表的状态
+  await db.update(users)
+    .set({ subscriptionStatus: subscription.status })
+    .where(eq(users.id, userId));
+}
+
+// Helper 函数：处理订阅更新或取消
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  await db.update(subscriptions)
+    .set({
+      status: subscription.status,
+      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+    })
+    .where(eq(subscriptions.stripeSubscriptionId, subscription.id));
+
+  // (可选) 也可以更新 users 表
+}
+
+// Webhook 主处理函数
+export async function POST(request: Request) {
+  const body = await request.text();
+  const signature = headers().get('Stripe-Signature') as string;
+
+  let event: Stripe.Event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+  } catch (err: any) {
+    return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+  }
+
+  // 处理已验证的事件
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed':
+        // 首次订阅成功
+        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+        break;
+
+      case 'invoice.paid':
+        // 续订成功
+        // 注意：'checkout.session.completed' 也会触发 'invoice.paid'
+        // 确保你的逻辑能处理好这一点
+        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+        break;
+
+      case 'customer.subscription.deleted':
+      case 'customer.subscription.updated':
+        // 订阅状态变更（取消、升级、降级）
+        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+        break;
+
+      default:
+        console.warn(`Unhandled event type: ${event.type}`);
+    }
+  } catch (error) {
+    console.error('Webhook handler failed:', error);
+    return new Response('Webhook handler failed.', { status: 500 });
+  }
+
+  // 向 Stripe 返回 200 OK，告知事件已成功接收
+  return new Response(null, { status: 200 });
+}
+```
+
+### 文件 3：`src/components/payment/PricingTable.tsx`
+
+最后，我们需要一个客户端组件来_调用_我们的 Server Action。
+
+```typescript
+'use client';
+
+import { useState } from 'react';
+import { createCheckoutSession } from '@/actions/payment.actions';
+import { Button } from '@/components/ui/button';
+import { useFormStatus } from 'react-dom';
+
+// 用于显示加载状态的内部组件
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button disabled={pending}>
+      {pending ? 'Processing...' : 'Upgrade Now'}
+    </Button>
+  );
+}
+
+export function PricingPlan({ priceId }: { priceId: string }) {
+  const [error, setError] = useState<string | null>(null);
+
+  // 使用 Server Action
+  const handleUpgrade = async () => {
+    setError(null);
+    const result = await createCheckoutSession(priceId);
+
+    if (result.error) {
+      setError(result.error);
+    } else if (result.url) {
+      // 重定向到 Stripe Checkout
+      window.location.href = result.url;
+    }
+  };
+
+  return (
+    <div>
+      <h3>Pro Plan</h3>
+      {/* 这里我们不使用 <form action={...}>
+        因为我们需要在客户端处理返回的 URL 并执行重定向。
+        我们直接调用 action 函数。
+      */}
+      <Button onClick={handleUpgrade}>Upgrade Now</Button>
+      {/* 或者，使用 <form> 和 useFormStatus:
+        <form action={async () => {
+          const res = await createCheckoutSession(priceId);
+          if (res.url) window.location.href = res.url;
+          // ... handle error
+        }}>
+          <SubmitButton />
+        </form>
+      */}
+      {error && <p className="text-red-500">{error}</p>}
+    </div>
+  );
+}
+```
+
+### 第 11 章：支付与订阅 (Stripe) - 总结
+
+本章为我们的 SAAS 应用构建了核心的**付费订阅功能**。我们对比了 **Stripe Checkout**（托管页面）和 **Stripe Elements**（嵌入式 UI）两种架构，并最终选择了 **Checkout + 客户门户 (Customer Portal)** 的组合策略，以实现快速集成和便捷管理。
+
+本章的核心是 **Webhook**。我们强调了“架构师法则三：Webhook 必须是幂等的”，因为它是同步订阅状态的唯一可靠来源。在代码层面，我们实现了清晰的职责分离：
+
+1. **Server Actions** (`payment.actions.ts`)：由用户在客户端触发，用于创建 `CheckoutSession`（发起订阅）和 `CustomerPortalSession`（管理订阅）。
+2. **Route Handler** (`api/stripe/webhook/route.ts`)：由 Stripe 服务器在后台调用，负责验证 Webhook 签名，并通过处理 `checkout.session.completed` 等事件，将订阅状态（如 `status` 和 `currentPeriodEnd`）安全地同步回我们的 Drizzle 数据库。
+

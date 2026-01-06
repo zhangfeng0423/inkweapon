@@ -1,0 +1,151 @@
+---
+title: "第 10 章：数据库迁移与运维"
+description: "在第 7 章和第 9 章，我们在 src/db/schema/ 目录中定义了我们的数据库表结构。但我们遗留了一个关键问题：当你修改了 schema (比如给 usersTable 添加一个 bio 字段)，这个变更如何安全地应用到已经在线上运行的生产数据库中？"
+date: "2026-01-06"
+published: true
+categories: ["typescript", "python"]
+author: "notion-import"
+image: "/images/blog/post-1.png"
+---
+
+
+# 第 10 章：数据库迁移与运维
+
+在第 7 章和第 9 章，我们在 `src/db/schema/` 目录中定义了我们的数据库表结构。但我们遗留了一个关键问题：**当你修改了 schema (比如给** **`usersTable`** **添加一个** **`bio`** **字段)，这个变更如何安全地应用到已经在线上运行的生产数据库中？**
+
+你总不能手动去生产数据库上 `ALTER TABLE` 吧？这太危险了，而且无法回滚，也无法在团队中同步。
+
+这就是**数据库迁移 (Database Migrations)** 发挥作用的地方。
+
+## 10.1. 为什么需要迁移？ (Schema 版本控制)
+
+从 Python/Django 的世界过来，你对这个概念一定不陌生。Django 有 `makemigrations` 和 `migrate` 命令。
+
+数据库迁移的本质就是：**"数据库 Schema 的版本控制"**。
+
+- **Git 管理你的代码**：你知道代码的每一个历史版本。
+- **迁移 (Migrations) 管理你的数据库结构**：你知道数据库表的每一个历史版本。
+
+**为什么必须用迁移？**
+
+1. **一致性 (Consistency)**：确保你队友的本地数据库、Staging (测试) 环境、Production (生产) 环境的表结构**完全一致**。
+2. **安全性 (Safety)**：迁移是原子的。如果一个迁移脚本中途失败，数据库会回滚到上一个已知状态，防止数据损坏。
+3. **可追溯性 (Traceability)**：`migrations` 文件夹中的每一个 SQL 文件都是一个历史记录，你可以准确知道“`users` 表的 `credits` 字段是何时添加的”。
+4. **自动化 (Automation)**：在 DevOps 流程中（见后续章节），你可以在部署新代码**之前**，自动运行数据库迁移脚本，确保代码和数据库始终匹配。
+
+在第 7 章中，当我们使用 `pnpm db:push` 时，我们是在**原型开发 (Prototyping)**。`db:push` 会比较你的 schema 和数据库，然后“粗暴”地将数据库同步成 schema 的样子（可能会删除数据！）。
+
+**在生产环境中，****`db:push`** **是绝对禁止的。在生产环境中，我们必须使用** **`db:generate`** **和** **`db:migrate`****。**
+
+## 10.2. [代码解析]：Drizzle Kit 工作流实战
+
+Drizzle Kit 是 Drizzle ORM 的配套 CLI 工具，它扮演了 Django 中 `manage.py makemigrations` 的角色。
+
+让我们在 `package.json` 中定义好脚本：
+
+```plain text
+// package.json (scripts)
+"scripts": {
+  // ...
+  "db:generate": "drizzle-kit generate:pg",
+  "db:migrate": "drizzle-kit migrate:pg",
+  "db:push": "drizzle-kit push:pg" // 仅限开发
+}
+```
+
+我们的标准工作流（当 `src/db/schema/` 发生变更时）如下：
+
+### 第 1 步：修改 Schema
+
+假设我们要在 `usersTable` (定义于 `src/db/schema/users.ts`) 中添加一个 `bio` 字段，用于用户个人简介。
+
+```typescript
+// src/db/schema/users.ts (修改)
+export const usersTable = pgTable("users", {
+  id: varchar("id").primaryKey(),
+  name: text("name"),
+  email: text("email").notNull().unique(),
+
+  bio: text("bio"), // <-- [新增字段]
+
+  // ... credits 和 stripe 字段 ...
+});
+```
+
+### 第 2 步：生成迁移 SQL (`pnpm db:generate`)
+
+现在，我们**不**运行 `db:push`。我们运行：
+
+```plain text
+pnpm db:generate
+```
+
+Drizzle Kit 会启动，它会：
+
+1. 读取你当前的 `src/db/schema/` 目录。
+2. （概念上）连接到你的数据库，查看数据库**当前的**状态（通过 `drizzle/_meta` 表）。
+3. 对比两者，找出差异。
+4. **生成一个 SQL 迁移文件**，而不是直接修改数据库。
+
+运行完毕后，你会发现 `src/db/migrations` 目录下多了一个新文件，类似：`0001_neat_captain_america.sql` (Drizzle 会自动生成一个随机名字)。
+
+打开这个 SQL 文件看看：
+
+```plain text
+-- src/db/migrations/0001_neat_captain_america.sql
+ALTER TABLE "users" ADD COLUMN "bio" text;
+```
+
+**这就是 Django** **`makemigrations`** **的 Drizzle 版本！**
+
+Drizzle Kit 准确地计算出了从 `v0` 到 `v1` 所需的 SQL 语句。这个 SQL 文件现在应该像代码一样被**提交到 Git 仓库**。
+
+### 第 3 步：执行迁移 (`pnpm db:migrate`)
+
+现在我们有了一个待执行 (pending) 的迁移文件。我们如何将其应用到数据库？
+
+运行：
+
+```plain text
+pnpm db:migrate
+```
+
+Drizzle Kit 会启动，它会：
+
+1. 连接到数据库。
+2. 查询数据库中的 `__drizzle_migrations` 表（Drizzle 自动创建），看看哪些迁移已经运行过了。
+3. 发现 `0001_neat_captain_america.sql` 还没有被运行。
+4. **按顺序执行**所有待处理的迁移 SQL 文件。
+5. 将 `0001_neat_captain_america.sql` 标记为已运行。
+
+现在，你的本地数据库、队友的数据库（拉取 Git 并运行 `pnpm db:migrate`）以及生产数据库（在部署流程中运行 `pnpm db:migrate`）都安全地更新了 `bio` 字段。
+
+**这就是 Django** **`migrate`** **的 Drizzle 版本！**
+
+这个工作流（`generate` -> `migrate`）是 Drizzle（以及所有专业 ORM）管理生产数据库的**唯一正确方式**。
+
+## 10.3. 备份与恢复策略 (PITR)
+
+作为架构师，你的职责不仅是构建应用，还要**保护数据**。如果你的数据库因为硬件故障或恶意攻击而丢失了所有用户数据，你的 SAAS 也就完蛋了。
+
+**备份 (Backups)** 是必不可少的。
+
+在传统的 Python/Flask 运维中，你可能需要自己设置一个 `cron` 任务，每天凌晨运行 `pg_dump` 来备份数据库。
+
+**在现代云架构中，我们依赖“托管数据库”来解决这个问题。**
+
+无论是 Vercel Postgres、Neon (Vercel Postgres 的底层)、还是 AWS RDS，它们都提供了开箱即用的**自动备份**和**时间点恢复 (Point-in-Time Recovery, PITR)** 功能。
+
+**什么是 PITR？**
+
+- **常规备份 (Snapshot)**：就像你每天拍一张照片。如果数据库在下午 3 点崩溃，你只能恢复到凌晨 12 点的数据，丢失 15 个小时的用户数据。
+- **PITR (Point-in-Time Recovery)**：它不仅有快照，还**持续记录**数据库的“事务日志”（Write-Ahead Log, WAL）。这就像在拍照片的同时，还**全程录像**。
+
+如果数据库在下午 3:00 崩溃，PITR 允许你将数据库恢复到**崩溃前的任意一秒**，例如下午 2:59:59。
+
+**架构师的决策：**
+对于我们的 SAAS 模板，我们的架构决策是：**“绝不自托管生产 Postgres 数据库”**。
+
+我们选择 Vercel Postgres / Neon / AWS RDS 的一个关键原因，就是为了购买它们的 **PITR** 和**高可用性 (High Availability)** 服务。这让我们能专注于编写业务逻辑 (`src/actions/`)，而不是在半夜两点起来处理数据库主从复制失败的问题。这是对 Python/Django 传统运维思维的一次巨大转变，我们用“云服务”取代了“运维人力”。
+
+

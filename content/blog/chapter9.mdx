@@ -1,6 +1,6 @@
 ---
-title: "第 9 章：[深度] 多租户架构设计"
-description: "欢迎来到第九章。到目前为止，我们已经构建了一个单用户系统：用户登录，创建_自己的_项目。但几乎所有成功的 SAAS (Software as a Service) 应用（如 Slack, Notion, Figma）都不是单用户系统，它们是多租户系统。"
+title: "Chapter 9: [Deep Dive] Multi-Tenant Architecture Design"
+description: "Welcome to Chapter Nine. So far, we've built a single-user system: users log in and create their own projects. But almost all successful SAAS (Software as a Service) applications (like Slack, Notion, Figma) are not single-user systems, they are multi-tenant systems."
 date: "2026-01-06"
 published: true
 categories: ["typescript", "react", "nextjs"]
@@ -9,94 +9,94 @@ image: "/images/blog/post-1.png"
 ---
 
 
-# 第 9 章：[深度] 多租户架构设计
+# Chapter 9: [Deep Dive] Multi-Tenant Architecture Design
 
-欢迎来到第九章。到目前为止，我们已经构建了一个单用户系统：用户登录，创建_自己的_项目。但几乎所有成功的 SAAS (Software as a Service) 应用（如 Slack, Notion, Figma）都不是单用户系统，它们是**多租户**系统。
+Welcome to Chapter Nine. So far, we've built a single-user system: users log in and create their own projects. But almost all successful SAAS (Software as a Service) applications (like Slack, Notion, Figma) are not single-user systems, they are **multi-tenant** systems.
 
-一个“租户”（Tenant）通常是一个**组织 (Organization)**、**工作空间 (Workspace)** 或**团队 (Team)**。用户（User）是租户的**成员 (Member)**。
+A "tenant" is typically an **Organization**, **Workspace**, or **Team**. Users are **members** of the tenant.
 
-一个用户可以创建或加入多个租户（比如你同时在公司 A 和个人项目 B 两个 Slack 工作空间中）。SAAS 应用必须在架构层面保证：**A 租户的数据（项目、文档、消息）绝对不能被 B 租户的成员看到。**
+A user can create or join multiple tenants (for example, you might be in both company A's and personal project B's Slack workspaces). A SAAS application must architecturally guarantee that **tenant A's data (projects, documents, messages) cannot absolutely be seen by tenant B's members.**
 
-实现这种数据隔离，就是多租户架构设计的核心。
+Implementing this data isolation is the core of multi-tenant architecture design.
 
-## 9.1. 选型：独立 Schema vs. 共享数据库 (tenant_id)
+## 9.1. Selection: Separate Schema vs. Shared Database (tenant_id)
 
-你有两种主流方案来实现租户隔离，这很像现实世界中“租房”的两种模式：
+You have two mainstream approaches to implement tenant isolation, similar to two models of "renting" in the real world:
 
-### 方案 A：独立数据库 / Schema (Isolated Tenancy)
+### Approach A: Separate Database / Schema (Isolated Tenancy)
 
-- **这是什么？** 为每一个新注册的租户（Organization），都在数据库中创建一个**全新的、独立的数据库或 Schema** (在 Postgres 中，Schema 更轻量)。
-- **类比**：你给每个租户一栋**独立的别墅**。
-- **优势**:
-    - **极高的数据隔离**：数据在物理上是分开的。A 租户的 Bug 绝对不可能意外查询到 B 租户的数据。
-    - **无“吵闹的邻居”**：A 租户的高强度查询不会影响 B 租户的性能。
-    - **易于备份/迁移**：你可以轻易地为某个特定租户备份或迁移数据。
-- **劣势**:
-    - **成本高昂**：1000 个租户 = 1000 个 Schema。
-    - **维护噩梦**：当你需要修改一个表结构（数据库迁移）时，你必须在**所有 1000 个 Schema** 上都成功运行一遍。
-    - **连接复杂**：应用需要动态地切换数据库连接或 Schema。
+- **What is it?** For each newly registered tenant (Organization), create a **completely new, independent database or Schema** (in Postgres, Schema is lighter).
+- **Analogy**: You give each tenant a **separate villa**.
+- **Advantages**:
+    - **Extremely high data isolation**: Data is physically separated. A bug in tenant A's code can absolutely never accidentally query tenant B's data.
+    - **No "noisy neighbors"**: Tenant A's intensive queries won't affect tenant B's performance.
+    - **Easy to backup/migrate**: You can easily backup or migrate data for a specific tenant.
+- **Disadvantages**:
+    - **High cost**: 1000 tenants = 1000 Schemas.
+    - **Maintenance nightmare**: When you need to modify a table structure (database migration), you must successfully run it on **all 1000 Schemas**.
+    - **Complex connections**: Applications need to dynamically switch database connections or Schemas.
 
-### 方案 B：共享数据库，`tenant_id` 过滤 (Shared Tenancy)
+### Approach B: Shared Database, `tenant_id` Filtering (Shared Tenancy)
 
-- **这是什么？** 所有的租户共享**同一个数据库**，**同一套表**。在每一个需要隔离的表上（如 `projects`, `documents`），都添加一个 `organization_id` (或 `workspace_id`) 字段。
-- **类比**：你给所有租户在**同一栋公寓楼**里各自分配一套公寓房。
-- **优势**:
-    - **成本低廉、易于维护**：只有一个数据库。数据库迁移只需运行一次。
-    - **易于扩展**：添加新租户只是在表中添加新行，几乎零成本。
-    - **易于聚合数据**：你可以轻松地跨所有租户进行分析（例如“我们总共有多少个项目？”）。
-- **劣势**:
-    - **隔离依赖应用层**：**安全完全依赖于你的代码**。如果你在查询时忘记添加 `WHERE organization_id = ?`，你就会立刻造成**灾难性的数据泄露**。
-    - **“吵闹的邻居”**：A 租户的一个超大查询可能会拖慢整个数据库，影响 B 租户。
+- **What is it?** All tenants share **the same database** and **the same set of tables**. On every table that needs isolation (like `projects`, `documents`), add an `organization_id` (or `workspace_id`) field.
+- **Analogy**: You assign each tenant an apartment in **the same apartment building**.
+- **Advantages**:
+    - **Low cost, easy to maintain**: Only one database. Database migrations only need to run once.
+    - **Easy to scale**: Adding new tenants is just adding rows to tables, almost zero cost.
+    - **Easy to aggregate data**: You can easily analyze across all tenants (e.g., "how many total projects do we have?").
+- **Disadvantages**:
+    - **Isolation depends on application layer**: **Security completely depends on your code**. If you forget to add `WHERE organization_id = ?` in a query, you'll immediately cause **catastrophic data leakage**.
+    - **"Noisy neighbors"**: A very large query from tenant A could slow down the entire database, affecting tenant B.
 
-**结论：**
-对于绝大多数 SAAS 应用，尤其是我们的模板项目，**方案 B (共享数据库 +** **`tenant_id`****)** 是现代的标准选择。它提供了成本、性能和可维护性上的最佳平衡点。
+**Conclusion:**
+For the vast majority of SAAS applications, especially our template project, **Approach B (shared database +** **`tenant_id`****)** is the modern standard choice. It provides the best balance of cost, performance, and maintainability.
 
-我们接下来的挑战，就是如何 100% 严格地执行 `tenant_id` 过滤，防止数据泄露。
+Our challenge going forward is how to 100% strictly enforce `tenant_id` filtering to prevent data leakage.
 
-## 9.2. 实现：在 Middleware 中解析租户上下文
+## 9.2. Implementation: Resolving Tenant Context in Middleware
 
-在我们开始查询之前，应用需要知道两件事：
+Before we start querying, the application needs to know two things:
 
-1. **“你是谁？”** (认证, Authentication) -> `userId`
-2. **“你现在代表哪个租户？”** (租户上下文, Tenancy) -> `organizationId`
+1. **"Who are you?"** (Authentication) -> `userId`
+2. **"Which tenant are you currently representing?"** (Tenancy) -> `organizationId`
 
-我们在第 8 章通过 `better-auth` 解决了问题 1。`auth()` 函数可以告诉我们 `session.user.id`。
+We solved problem 1 in Chapter 8 through `better-auth`. The `auth()` function can tell us `session.user.id`.
 
-对于问题 2，一个用户可能属于多个组织，我们如何知道他当前正在操作哪一个？
+For problem 2, a user might belong to multiple organizations, how do we know which one they're currently operating in?
 
-- **方案 1：子域名** (如 `tenant-a.saas.com`)。Middleware 从 `host` header 中解析。
-- **方案 2：URL 路径** (如 `saas.com/org/tenant-a/dashboard`)。Middleware 从 `pathname` 中解析。
-- **方案 3：客户端 Cookie / Session**。用户登录后，选择一个组织，我们将 `current_org_id` 写入一个 Cookie（就像 8.3 节的偏好设置）或 `session`。
+- **Approach 1: Subdomain** (e.g., `tenant-a.saas.com`). Middleware parses from `host` header.
+- **Approach 2: URL Path** (e.g., `saas.com/org/tenant-a/dashboard`). Middleware parses from `pathname`.
+- **Approach 3: Client-side Cookie / Session**. After user logs in, they select an organization, and we write `current_org_id` to a cookie (like preferences in section 8.3) or `session`.
 
-在我们的实战项目中，**方案 3 (Cookie)** 结合**方案 2 (URL)** 是最灵活的。但无论哪种，**Next.js Middleware (****`src/middleware.ts`****)** 都是解析这个上下文的最佳场所。
+In our实战项目, **Approach 3 (Cookie)** combined with **Approach 2 (URL)** is the most flexible. But whichever approach, **Next.js Middleware (****`src/middleware.ts`****)** is the best place to resolve this context.
 
 ```typescript
-// src/middleware.ts (概念)
+// src/middleware.ts (concept)
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { auth } from '@/lib/auth'; // 导入我们的 auth 配置
+import { auth } from '@/lib/auth'; // Import our auth configuration
 
 export async function middleware(request: NextRequest) {
-  const session = await auth(); // 1. 获取会话
+  const session = await auth(); // 1. Get session
   const pathname = request.nextUrl.pathname;
 
-  // 2. 如果未登录，且访问受保护页面，重定向到登录
+  // 2. If not logged in and accessing protected pages, redirect to login
   if (!session && pathname.startsWith('/dashboard')) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
   if (session && pathname.startsWith('/dashboard')) {
-    // 3. [租户上下文]
-    //    在这里，我们应该从 cookie 或 session 中获取用户当前的 'activeOrgId'
-    //    或者从 pathname (如 /dashboard/[orgId]/...) 中解析
+    // 3. [Tenant context]
+    //    Here, we should get user's current 'activeOrgId' from cookie or session
+    //    Or parse from pathname (e.g., /dashboard/[orgId]/...)
     const activeOrgId = request.cookies.get('active_org_id')?.value;
 
     if (!activeOrgId && pathname !== '/dashboard/select-org') {
-      // 4. 如果用户已登录但没有选定组织，强制他去选择
+      // 4. If user is logged in but hasn't selected an organization, force them to select
       return NextResponse.redirect(new URL('/dashboard/select-org', request.url));
     }
 
-    // 5. (高级) 将 orgId 注入请求头，以便 Server Components 访问
+    // 5. (Advanced) Inject orgId into request headers for Server Components to access
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-org-id', activeOrgId);
 
@@ -113,90 +113,90 @@ export async function middleware(request: NextRequest) {
 // ... config matcher ...
 ```
 
-Middleware 确保了任何进入 `/dashboard` 的请求都必须有关联的 `userId` (来自 session) 和 `orgId` (来自 cookie 或 URL)。
+Middleware ensures that any request entering `/dashboard` must have an associated `userId` (from session) and `orgId` (from cookie or URL).
 
-## 9.3. [代码解析]：分析 `tenant_id` 模式与服务层隔离
+## 9.3. [Code Analysis]: Analyzing `tenant_id` Pattern and Service Layer Isolation
 
-现在我们有了 `userId` 和 `orgId`，如何在**每一个**数据库查询中安全地使用它们？
+Now that we have `userId` and `orgId`, how do we safely use them in **every** database query?
 
-**第 1 步：更新 Schema (****`tenant_id`** **模式)**
+**Step 1: Update Schema (****`tenant_id`** **pattern)**
 
-我们必须在所有需要隔离的资源上添加 `organizationId`。
+We must add `organizationId` to all resources that need isolation.
 
 ```typescript
 // src/db/schema/organizations.ts
 import { pgTable, text, varchar } from "drizzle-orm/pg-core";
 import { usersTable } from "./users";
 
-// 1. 租户 (Organization) 表
+// 1. Tenant (Organization) table
 export const organizationsTable = pgTable("organizations", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
 });
 
-// 2. 多对多 (Many-to-Many) 联结表
-// 一个用户可以属于多个组织，一个组织可以有多个用户
+// 2. Many-to-Many join table
+// One user can belong to multiple organizations, one organization can have multiple users
 export const usersToOrganizationsTable = pgTable("users_to_organizations", {
   userId: varchar("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
   organizationId: varchar("organization_id").notNull().references(() => organizationsTable.id, { onDelete: "cascade" }),
-  // (可以加个 role 字段: 'admin', 'member')
+  // (Can add a role field: 'admin', 'member')
 });
 
-// src/db/schema/projects.ts (修改)
+// src/db/schema/projects.ts (modified)
 import { organizationsTable } from "./organizations";
 
 export const projectsTable = pgTable("projects", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
 
-  // [关键] 不再是 ownerId，而是 organizationId
-  // ownerId 只代表创建者，但归属权在组织
+  // [Key] No longer ownerId, but organizationId
+  // ownerId only represents creator, but ownership belongs to organization
   organizationId: varchar("organization_id").notNull()
     .references(() => organizationsTable.id, { onDelete: "cascade" }),
 
-  // (可选) 仍然保留 'created_by_user_id'
+  // (Optional) Still keep 'created_by_user_id'
   // ownerId: varchar("owner_id")...
 });
 ```
 
-**第 2 步：实现服务层 (Service Layer) 隔离**
+**Step 2: Implement Service Layer Isolation**
 
-这是防止数据泄露的**核心策略**。
+This is the **core strategy** for preventing data leakage.
 
-我们**永远不**应该在 Server Actions 或 API 路由中直接编写 `db.select()...`。为什么？因为开发者会**忘记**添加 `where(eq(projectsTable.organizationId, orgId))`。
+We **never** write `db.select()...` directly in Server Actions or API routes. Why? Because developers will **forget** to add `where(eq(projectsTable.organizationId, orgId))`.
 
-取而代之，我们创建一个**“服务层”** (或称 "Repository")，它是唯一允许直接与 `db` 对话的地方。
+Instead, we create a **"service layer"** (or "Repository"), the only place allowed to talk directly to `db`.
 
 ```typescript
 // src/data/projects.service.ts
-// (注意：这是 .ts 文件，不是 React 组件)
+// (Note: This is a .ts file, not a React component)
 import { db } from "@/db";
 import { projectsTable } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 
-// 这是一个安全上下文，从 Server Action 传入
-// 保证了调用者必须是已认证且有租户上下文的
+// This is a security context passed from Server Action
+// Guarantees the caller must be authenticated and have tenant context
 type TenantContext = {
   userId: string;
   orgId: string;
 };
 
 /**
- * [安全] 根据 ID 获取单个项目，已强制执行租户隔离
+ * [Secure] Get single project by ID, tenant isolation enforced
  */
 export async function getProjectById(ctx: TenantContext, projectId: string) {
 
-  // 服务层的核心职责：注入租户 ID
+  // Service layer's core responsibility: inject tenant ID
   const project = await db.query.projectsTable.findFirst({
     where: and(
       eq(projectsTable.id, projectId),
-      eq(projectsTable.organizationId, ctx.orgId) // <--- [安全防线]
+      eq(projectsTable.organizationId, ctx.orgId) // <--- [Security line]
     )
   });
 
   if (!project) {
-    // 找不到项目，或项目不属于该租户，统一返回 null 或抛出错误
-    // 绝不泄露 "项目存在但你无权访问" 的信息
+    // Project not found, or project doesn't belong to tenant, uniformly return null or throw error
+    // Never leak information like "project exists but you don't have access"
     return null;
   }
 
@@ -204,45 +204,45 @@ export async function getProjectById(ctx: TenantContext, projectId: string) {
 }
 
 /**
- * [安全] 获取当前租户的所有项目
+ * [Secure] Get all projects for current tenant
  */
 export async function getProjectsForCurrentOrg(ctx: TenantContext) {
   const projects = await db.select()
     .from(projectsTable)
     .where(
-      eq(projectsTable.organizationId, ctx.orgId) // <--- [安全防线]
+      eq(projectsTable.organizationId, ctx.orgId) // <--- [Security line]
     );
 
   return projects;
 }
 ```
 
-**第 3 步：在 Server Action 中使用服务层**
+**Step 3: Use Service Layer in Server Actions**
 
-现在，我们的 Server Action (见第 6 章) 变得非常干净和安全。它只负责**认证**和**上下文**，不碰触原始数据库查询。
+Now, our Server Action (see Chapter 6) becomes very clean and secure. It only handles **authentication** and **context**, not touching raw database queries.
 
 ```typescript
 // src/actions/project.actions.ts
 "use server";
 
 import { auth } from "@/lib/auth";
-import { getActiveOrgIdForUser } from "@/data/organizations.service"; // 假设的函数
-import { getProjectById } from "@/data/projects.service"; // 导入我们的安全服务
+import { getActiveOrgIdForUser } from "@/data/organizations.service"; // Hypothetical function
+import { getProjectById } from "@/data/projects.service"; // Import our secure service
 import { createSafeActionClient } from "next-safe-action";
 import { z } from "zod";
 
 // ...
 const action = createSafeActionClient({
-  // 1. 中间件：自动获取并验证 Auth 和租户上下文
+  // 1. Middleware: Automatically get and validate Auth and tenant context
   async middleware() {
     const session = await auth();
-    if (!session?.user?.id) throw new Error("未认证");
+    if (!session?.user?.id) throw new Error("Unauthorized");
 
-    // 从 cookie 或数据库获取当前激活的 orgId
+    // Get current active orgId from cookie or database
     const orgId = await getActiveOrgIdForUser(session.user.id);
-    if (!orgId) throw new Error("未找到激活的组织");
+    if (!orgId) throw new Error("No active organization found");
 
-    // 2. 将安全上下文 (ctx) 传递给 Action
+    // 2. Pass security context (ctx) to Action
     return { userId: session.user.id, orgId };
   },
 });
@@ -252,18 +252,18 @@ const getProjectSchema = z.object({
 });
 
 /**
- * [安全] 一个用于客户端的安全 Action
+ * [Secure] A safe action for client-side
  */
 export const getProject = action(
   getProjectSchema,
-  async ({ projectId }, ctx) => { // <-- ctx 来自中间件
+  async ({ projectId }, ctx) => { // <-- ctx from middleware
 
-    // 3. 调用服务层，传入安全上下文
-    // 我们 100% 确定这个调用是租户隔离的
+    // 3. Call service layer, pass security context
+    // We're 100% sure this call is tenant-isolated
     const project = await getProjectById(ctx, projectId);
 
     if (!project) {
-      return { error: "项目未找到" };
+      return { error: "Project not found" };
     }
 
     return { success: true, data: project };
@@ -271,9 +271,8 @@ export const getProject = action(
 );
 ```
 
-**本章总结**：
-我们通过**共享数据库 (****`tenant_id`****)** 模式奠定了 SAAS 的基础，然后通过**服务层 (Service Layer)** 模式，构建了一个可维护、可测试且**高度安全**的数据访问层。
+**Chapter Summary**:
+We laid the SAAS foundation through the **shared database (****`tenant_id`****)** pattern, then built a maintainable, testable, and **highly secure** data access layer through the **service layer** pattern.
 
-这套 `Middleware (上下文) -> Server Action (认证) -> Service Layer (安全查询)` 的架构，是你在实际 SAAS 项目中防止数据泄露的最佳实践。
-
+This `Middleware (context) -> Server Action (authentication) -> Service Layer (secure queries)` architecture is the best practice for preventing data leakage in real-world SAAS projects.
 

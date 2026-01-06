@@ -1,6 +1,6 @@
 ---
-title: "第 10 章：数据库迁移与运维"
-description: "在第 7 章和第 9 章，我们在 src/db/schema/ 目录中定义了我们的数据库表结构。但我们遗留了一个关键问题：当你修改了 schema (比如给 usersTable 添加一个 bio 字段)，这个变更如何安全地应用到已经在线上运行的生产数据库中？"
+title: "Chapter 10: Database Migrations and Operations"
+description: "In Chapters 7 and 9, we defined our database table structure in the src/db/schema/ directory. But we left a critical question: when you modify the schema (like adding a bio field to usersTable), how do you safely apply this change to a production database that's already running live?"
 date: "2026-01-06"
 published: true
 categories: ["typescript", "python"]
@@ -9,39 +9,39 @@ image: "/images/blog/post-1.png"
 ---
 
 
-# 第 10 章：数据库迁移与运维
+# Chapter 10: Database Migrations and Operations
 
-在第 7 章和第 9 章，我们在 `src/db/schema/` 目录中定义了我们的数据库表结构。但我们遗留了一个关键问题：**当你修改了 schema (比如给** **`usersTable`** **添加一个** **`bio`** **字段)，这个变更如何安全地应用到已经在线上运行的生产数据库中？**
+In Chapters 7 and 9, we defined our database table structure in the `src/db/schema/` directory. But we left a critical question: **when you modify the schema (like adding a** **`bio`** **field to** **`usersTable`****)**, how do you safely apply this change to a production database that's already running live?
 
-你总不能手动去生产数据库上 `ALTER TABLE` 吧？这太危险了，而且无法回滚，也无法在团队中同步。
+You can't just manually `ALTER TABLE` on the production database, right? That's too dangerous, and it can't be rolled back or synchronized across your team.
 
-这就是**数据库迁移 (Database Migrations)** 发挥作用的地方。
+This is where **Database Migrations** come in.
 
-## 10.1. 为什么需要迁移？ (Schema 版本控制)
+## 10.1. Why Do We Need Migrations? (Schema Version Control)
 
-从 Python/Django 的世界过来，你对这个概念一定不陌生。Django 有 `makemigrations` 和 `migrate` 命令。
+Coming from the Python/Django world, you're definitely familiar with this concept. Django has `makemigrations` and `migrate` commands.
 
-数据库迁移的本质就是：**"数据库 Schema 的版本控制"**。
+The essence of database migrations is: **"version control for database Schema"**.
 
-- **Git 管理你的代码**：你知道代码的每一个历史版本。
-- **迁移 (Migrations) 管理你的数据库结构**：你知道数据库表的每一个历史版本。
+- **Git manages your code**: You know every historical version of your code.
+- **Migrations manage your database structure**: You know every historical version of your database tables.
 
-**为什么必须用迁移？**
+**Why must we use migrations?**
 
-1. **一致性 (Consistency)**：确保你队友的本地数据库、Staging (测试) 环境、Production (生产) 环境的表结构**完全一致**。
-2. **安全性 (Safety)**：迁移是原子的。如果一个迁移脚本中途失败，数据库会回滚到上一个已知状态，防止数据损坏。
-3. **可追溯性 (Traceability)**：`migrations` 文件夹中的每一个 SQL 文件都是一个历史记录，你可以准确知道“`users` 表的 `credits` 字段是何时添加的”。
-4. **自动化 (Automation)**：在 DevOps 流程中（见后续章节），你可以在部署新代码**之前**，自动运行数据库迁移脚本，确保代码和数据库始终匹配。
+1. **Consistency**: Ensures your teammates' local databases, Staging environment, and Production environment have **exactly the same** table structure.
+2. **Safety**: Migrations are atomic. If a migration script fails halfway through, the database rolls back to the last known state, preventing data corruption.
+3. **Traceability**: Every SQL file in the `migrations` folder is a history record. You can know exactly "when the `credits` field was added to the `users` table."
+4. **Automation**: In DevOps workflows (see later chapters), you can automatically run database migration scripts before deploying new code, ensuring code and database always match.
 
-在第 7 章中，当我们使用 `pnpm db:push` 时，我们是在**原型开发 (Prototyping)**。`db:push` 会比较你的 schema 和数据库，然后“粗暴”地将数据库同步成 schema 的样子（可能会删除数据！）。
+In Chapter 7, when we used `pnpm db:push`, we were **prototyping**. `db:push` compares your schema to the database and "brutally" syncs the database to match the schema (it might delete data!).
 
-**在生产环境中，****`db:push`** **是绝对禁止的。在生产环境中，我们必须使用** **`db:generate`** **和** **`db:migrate`****。**
+**In production,****`db:push`** **is absolutely forbidden. In production, we must use** **`db:generate`** **and** **`db:migrate`****.**
 
-## 10.2. [代码解析]：Drizzle Kit 工作流实战
+## 10.2. [Code Analysis]: Drizzle Kit Workflow in Practice
 
-Drizzle Kit 是 Drizzle ORM 的配套 CLI 工具，它扮演了 Django 中 `manage.py makemigrations` 的角色。
+Drizzle Kit is the companion CLI tool for Drizzle ORM, playing the role of `manage.py makemigrations` in Django.
 
-让我们在 `package.json` 中定义好脚本：
+Let's define our scripts in `package.json`:
 
 ```plain text
 // package.json (scripts)
@@ -49,103 +49,102 @@ Drizzle Kit 是 Drizzle ORM 的配套 CLI 工具，它扮演了 Django 中 `mana
   // ...
   "db:generate": "drizzle-kit generate:pg",
   "db:migrate": "drizzle-kit migrate:pg",
-  "db:push": "drizzle-kit push:pg" // 仅限开发
+  "db:push": "drizzle-kit push:pg" // Development only
 }
 ```
 
-我们的标准工作流（当 `src/db/schema/` 发生变更时）如下：
+Our standard workflow (when `src/db/schema/` changes) is as follows:
 
-### 第 1 步：修改 Schema
+### Step 1: Modify Schema
 
-假设我们要在 `usersTable` (定义于 `src/db/schema/users.ts`) 中添加一个 `bio` 字段，用于用户个人简介。
+Suppose we want to add a `bio` field to `usersTable` (defined in `src/db/schema/users.ts`) for user biographies.
 
 ```typescript
-// src/db/schema/users.ts (修改)
+// src/db/schema/users.ts (modified)
 export const usersTable = pgTable("users", {
   id: varchar("id").primaryKey(),
   name: text("name"),
   email: text("email").notNull().unique(),
 
-  bio: text("bio"), // <-- [新增字段]
+  bio: text("bio"), // <-- [New field]
 
-  // ... credits 和 stripe 字段 ...
+  // ... credits and stripe fields ...
 });
 ```
 
-### 第 2 步：生成迁移 SQL (`pnpm db:generate`)
+### Step 2: Generate Migration SQL (`pnpm db:generate`)
 
-现在，我们**不**运行 `db:push`。我们运行：
+Now, we **don't** run `db:push`. We run:
 
 ```plain text
 pnpm db:generate
 ```
 
-Drizzle Kit 会启动，它会：
+Drizzle Kit will launch and:
 
-1. 读取你当前的 `src/db/schema/` 目录。
-2. （概念上）连接到你的数据库，查看数据库**当前的**状态（通过 `drizzle/_meta` 表）。
-3. 对比两者，找出差异。
-4. **生成一个 SQL 迁移文件**，而不是直接修改数据库。
+1. Read your current `src/db/schema/` directory.
+2. (Conceptually) Connect to your database and see the database's **current** state (through the `drizzle/_meta` table).
+3. Compare the two and find differences.
+4. **Generate a SQL migration file** instead of directly modifying the database.
 
-运行完毕后，你会发现 `src/db/migrations` 目录下多了一个新文件，类似：`0001_neat_captain_america.sql` (Drizzle 会自动生成一个随机名字)。
+After running, you'll find a new file in the `src/db/migrations` directory, like: `0001_neat_captain_america.sql` (Drizzle automatically generates a random name).
 
-打开这个 SQL 文件看看：
+Open this SQL file and see:
 
 ```plain text
 -- src/db/migrations/0001_neat_captain_america.sql
 ALTER TABLE "users" ADD COLUMN "bio" text;
 ```
 
-**这就是 Django** **`makemigrations`** **的 Drizzle 版本！**
+**This is the Drizzle version of Django's** **`makemigrations`****!**
 
-Drizzle Kit 准确地计算出了从 `v0` 到 `v1` 所需的 SQL 语句。这个 SQL 文件现在应该像代码一样被**提交到 Git 仓库**。
+Drizzle Kit accurately calculated the SQL statements needed to go from `v0` to `v1`. This SQL file should now be **committed to your Git repository** like code.
 
-### 第 3 步：执行迁移 (`pnpm db:migrate`)
+### Step 3: Execute Migration (`pnpm db:migrate`)
 
-现在我们有了一个待执行 (pending) 的迁移文件。我们如何将其应用到数据库？
+Now we have a pending migration file. How do we apply it to the database?
 
-运行：
+Run:
 
 ```plain text
 pnpm db:migrate
 ```
 
-Drizzle Kit 会启动，它会：
+Drizzle Kit will launch and:
 
-1. 连接到数据库。
-2. 查询数据库中的 `__drizzle_migrations` 表（Drizzle 自动创建），看看哪些迁移已经运行过了。
-3. 发现 `0001_neat_captain_america.sql` 还没有被运行。
-4. **按顺序执行**所有待处理的迁移 SQL 文件。
-5. 将 `0001_neat_captain_america.sql` 标记为已运行。
+1. Connect to the database.
+2. Query the `__drizzle_migrations` table in the database (automatically created by Drizzle) to see which migrations have already run.
+3. Discover that `0001_neat_captain_america.sql` hasn't been run yet.
+4. **Execute in order** all pending migration SQL files.
+5. Mark `0001_neat_captain_america.sql` as run.
 
-现在，你的本地数据库、队友的数据库（拉取 Git 并运行 `pnpm db:migrate`）以及生产数据库（在部署流程中运行 `pnpm db:migrate`）都安全地更新了 `bio` 字段。
+Now, your local database, your teammates' databases (pull from Git and run `pnpm db:migrate`), and your production database (run `pnpm db:migrate` in the deployment workflow) all safely have the `bio` field updated.
 
-**这就是 Django** **`migrate`** **的 Drizzle 版本！**
+**This is the Drizzle version of Django's** **`migrate`****!**
 
-这个工作流（`generate` -> `migrate`）是 Drizzle（以及所有专业 ORM）管理生产数据库的**唯一正确方式**。
+This workflow (`generate` -> `migrate`) is the **only correct way** for Drizzle (and all professional ORMs) to manage production databases.
 
-## 10.3. 备份与恢复策略 (PITR)
+## 10.3. Backup and Recovery Strategy (PITR)
 
-作为架构师，你的职责不仅是构建应用，还要**保护数据**。如果你的数据库因为硬件故障或恶意攻击而丢失了所有用户数据，你的 SAAS 也就完蛋了。
+As an architect, your responsibility is not just building applications, but **protecting data**. If your database loses all user data due to hardware failure or malicious attack, your SAAS is finished.
 
-**备份 (Backups)** 是必不可少的。
+**Backups** are essential.
 
-在传统的 Python/Flask 运维中，你可能需要自己设置一个 `cron` 任务，每天凌晨运行 `pg_dump` 来备份数据库。
+In traditional Python/Flask operations, you might need to set up a `cron` job yourself to run `pg_dump` every morning to backup the database.
 
-**在现代云架构中，我们依赖“托管数据库”来解决这个问题。**
+**In modern cloud architecture, we rely on "managed databases" to solve this problem.**
 
-无论是 Vercel Postgres、Neon (Vercel Postgres 的底层)、还是 AWS RDS，它们都提供了开箱即用的**自动备份**和**时间点恢复 (Point-in-Time Recovery, PITR)** 功能。
+Whether it's Vercel Postgres, Neon (underlying Vercel Postgres), or AWS RDS, they all provide out-of-the-box **automatic backups** and **Point-in-Time Recovery (PITR)** features.
 
-**什么是 PITR？**
+**What is PITR?**
 
-- **常规备份 (Snapshot)**：就像你每天拍一张照片。如果数据库在下午 3 点崩溃，你只能恢复到凌晨 12 点的数据，丢失 15 个小时的用户数据。
-- **PITR (Point-in-Time Recovery)**：它不仅有快照，还**持续记录**数据库的“事务日志”（Write-Ahead Log, WAL）。这就像在拍照片的同时，还**全程录像**。
+- **Regular Backup (Snapshot)**: Like taking a photo every day. If the database crashes at 3 PM, you can only recover to the 12 AM data, losing 15 hours of user data.
+- **PITR (Point-in-Time Recovery)**: Not only has snapshots, but also **continuously records** the database's "transaction log" (Write-Ahead Log, WAL). This is like recording video while taking photos.
 
-如果数据库在下午 3:00 崩溃，PITR 允许你将数据库恢复到**崩溃前的任意一秒**，例如下午 2:59:59。
+If the database crashes at 3:00 PM, PITR allows you to recover the database to **any second before the crash**, for example 2:59:59 PM.
 
-**架构师的决策：**
-对于我们的 SAAS 模板，我们的架构决策是：**“绝不自托管生产 Postgres 数据库”**。
+**Architect's Decision:**
+For our SAAS template, our architectural decision is: **"never self-host production Postgres databases."**
 
-我们选择 Vercel Postgres / Neon / AWS RDS 的一个关键原因，就是为了购买它们的 **PITR** 和**高可用性 (High Availability)** 服务。这让我们能专注于编写业务逻辑 (`src/actions/`)，而不是在半夜两点起来处理数据库主从复制失败的问题。这是对 Python/Django 传统运维思维的一次巨大转变，我们用“云服务”取代了“运维人力”。
-
+One of the key reasons we chose Vercel Postgres / Neon / AWS RDS is to purchase their **PITR** and **High Availability** services. This lets us focus on writing business logic (`src/actions/`) instead of waking up at 2 AM to handle database replication failures. This is a huge shift from traditional Python/Django operations thinking, replacing "operations manpower" with "cloud services."
 
